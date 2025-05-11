@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from './prisma/prisma.module';
 import * as Joi from 'joi';
 
 @Module({
@@ -27,6 +28,7 @@ import * as Joi from 'joi';
       }),
     }),
     AuthModule,
+    PrismaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
