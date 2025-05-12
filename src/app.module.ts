@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { PasswordModule } from './password/password.module';
 import { PrismaModule } from './prisma/prisma.module';
 import * as Joi from 'joi';
 
@@ -25,9 +26,12 @@ import * as Joi from 'joi';
             'string.pattern.base':
               '"CLIENT_SECRET" fails to match the required pattern: /^[a-zA-Z0-9_+]+$/',
           }),
+        USER_POOL_ID: Joi.string().required(),
+        REGION: Joi.string().required(),
       }),
     }),
     AuthModule,
+    PasswordModule,
     PrismaModule,
   ],
   controllers: [AppController],
