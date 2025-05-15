@@ -1,25 +1,25 @@
 import { IsOptional, IsString } from 'class-validator';
 
-export class PasswordUpdateInputDto {
+export class UpdatePasswordDto {
   @IsOptional()
   @IsString()
-  url: string;
+  url?: string;
 
   @IsOptional()
   @IsString()
-  serviceName: string;
+  serviceName?: string;
 
   @IsOptional()
   @IsString()
-  username: string;
+  username?: string;
 
   @IsOptional()
   @IsString()
-  email: string;
+  email?: string;
 
   @IsOptional()
   @IsString()
-  password: string;
+  password?: string;
 
   @IsOptional()
   @IsString()

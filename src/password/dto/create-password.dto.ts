@@ -1,20 +1,20 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-export class PasswordCreateInputDto {
+export class CreatePasswordDto {
   @IsOptional()
   @IsString()
-  url: string;
+  url?: string;
 
   @IsString()
   serviceName: string;
 
   @IsOptional()
   @IsString()
-  username: string;
+  username?: string;
 
   @IsOptional()
   @IsString()
-  email: string;
+  email?: string;
 
   @IsNotEmpty()
   @IsString()

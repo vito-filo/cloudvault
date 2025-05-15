@@ -1,15 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { plainToInstance } from 'class-transformer';
-import { PasswordCreateInputDto } from './dto/password-create-input.dto';
-import { PasswordUpdateInputDto } from './dto/password-update-input.dto';
-import { PasswordOutputDto } from './dto/pasword-output.dto';
+import {
+  CreatePasswordDto,
+  GetPasswordDto,
+  GetPasswordDetailDto,
+  UpdatePasswordDto,
+} from './dto';
 
 @Injectable()
 export class PasswordService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAllPasswords(userId: number): Promise<PasswordOutputDto[]> {
+  async getAllPasswords(userId: number): Promise<GetPasswordDto[]> {
     const passwordList = await this.prisma.password.findMany({
       where: {
         userId: userId,
@@ -22,12 +25,15 @@ export class PasswordService {
         updatedAt: true,
       },
     });
-    return plainToInstance(PasswordOutputDto, passwordList, {
+    return plainToInstance(GetPasswordDto, passwordList, {
       excludeExtraneousValues: true,
     });
   }
 
-  async getPasswordById(userId: number, passwordId: number) {
+  async getPasswordById(
+    userId: number,
+    passwordId: number,
+  ): Promise<GetPasswordDetailDto> {
     const password = await this.prisma.password.findFirst({
       where: {
         userId: userId,
@@ -39,13 +45,15 @@ export class PasswordService {
       throw new NotFoundException(`Item doesn't exist`);
     }
 
-    return password;
+    return plainToInstance(GetPasswordDetailDto, password, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async createPassword(
     userId: number,
-    createPasswordDto: PasswordCreateInputDto,
-  ): Promise<PasswordOutputDto> {
+    createPasswordDto: CreatePasswordDto,
+  ): Promise<GetPasswordDto> {
     const password = await this.prisma.password.create({
       data: {
         ...createPasswordDto,
@@ -59,7 +67,7 @@ export class PasswordService {
         updatedAt: true,
       },
     });
-    return plainToInstance(PasswordOutputDto, password, {
+    return plainToInstance(GetPasswordDto, password, {
       excludeExtraneousValues: true,
     });
   }
@@ -67,8 +75,8 @@ export class PasswordService {
   async updatePassword(
     userId: number,
     passwordId: number,
-    updatePasswordDto: PasswordUpdateInputDto,
-  ): Promise<PasswordOutputDto> {
+    updatePasswordDto: UpdatePasswordDto,
+  ): Promise<GetPasswordDto> {
     const password = await this.prisma.password.update({
       where: {
         id: passwordId,
@@ -83,7 +91,7 @@ export class PasswordService {
         updatedAt: true,
       },
     });
-    return plainToInstance(PasswordOutputDto, password, {
+    return plainToInstance(GetPasswordDto, password, {
       excludeExtraneousValues: true,
     });
   }
@@ -91,7 +99,7 @@ export class PasswordService {
   async deletePassword(
     userId: number,
     passwordId: number,
-  ): Promise<PasswordOutputDto> {
+  ): Promise<GetPasswordDto> {
     const password = await this.prisma.password.delete({
       where: {
         id: passwordId,
@@ -106,7 +114,7 @@ export class PasswordService {
       },
     });
 
-    return plainToInstance(PasswordOutputDto, password, {
+    return plainToInstance(GetPasswordDto, password, {
       excludeExtraneousValues: true,
     });
   }

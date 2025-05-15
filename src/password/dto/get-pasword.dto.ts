@@ -1,7 +1,8 @@
 import { Expose } from 'class-transformer';
 
-// This is a safe format for outputting password data to the client.
-export class PasswordOutputDto {
+// This DTO is used to return a password without sensitive information
+// used for listing all passwords, or returning a created/updated passeword info.
+export class GetPasswordDto {
   @Expose()
   id: number;
 

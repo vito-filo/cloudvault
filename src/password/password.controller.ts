@@ -9,17 +9,19 @@ import {
   Param,
 } from '@nestjs/common';
 import { PasswordService } from './password.service';
-import { PasswordDetailOutputDto } from './dto/password-detail-output.dto';
-import { PasswordCreateInputDto } from './dto/password-create-input.dto';
-import { PasswordUpdateInputDto } from './dto/password-update-input.dto';
-import { PasswordOutputDto } from './dto/pasword-output.dto';
+import {
+  CreatePasswordDto,
+  GetPasswordDto,
+  GetPasswordDetailDto,
+  UpdatePasswordDto,
+} from './dto';
 @Controller('password')
 export class PasswordController {
   constructor(private readonly passwordService: PasswordService) {}
 
   // Get all passwords for a specific user
   @Get(':id')
-  findAll(@Param('id') id: string): Promise<PasswordOutputDto[]> {
+  findAll(@Param('id') id: string): Promise<GetPasswordDto[]> {
     return this.passwordService.getAllPasswords(+id);
   }
 
@@ -28,7 +30,7 @@ export class PasswordController {
   findOne(
     @Param('id') id: string,
     @Param('passwordId') passwordId: string,
-  ): Promise<PasswordDetailOutputDto | null> {
+  ): Promise<GetPasswordDetailDto | null> {
     return this.passwordService.getPasswordById(+id, +passwordId);
   }
 
@@ -36,8 +38,8 @@ export class PasswordController {
   @Post(':id')
   create(
     @Param('id', ParseIntPipe) id: number,
-    @Body() createPasswordDto: PasswordCreateInputDto,
-  ): Promise<PasswordOutputDto> {
+    @Body() createPasswordDto: CreatePasswordDto,
+  ): Promise<GetPasswordDto> {
     return this.passwordService.createPassword(id, createPasswordDto);
   }
 
@@ -46,8 +48,8 @@ export class PasswordController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Param('passwordId', ParseIntPipe) passwordId: number,
-    @Body() updatePasswordDto: PasswordUpdateInputDto,
-  ): Promise<PasswordOutputDto> {
+    @Body() updatePasswordDto: UpdatePasswordDto,
+  ): Promise<GetPasswordDto> {
     return this.passwordService.updatePassword(
       id,
       passwordId,
@@ -60,7 +62,7 @@ export class PasswordController {
   delete(
     @Param('id', ParseIntPipe) id: number,
     @Param('passwordId', ParseIntPipe) passwordId: number,
-  ): Promise<PasswordOutputDto> {
+  ): Promise<GetPasswordDto> {
     return this.passwordService.deletePassword(id, passwordId);
   }
 }
