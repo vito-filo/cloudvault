@@ -9,7 +9,7 @@ export class ConfirmSignupDto {
   userSub: string; // User id (Sub) from Cognito, returned after signup
 
   @IsOptional()
-  name: string;
+  name?: string;
 
   @IsNotEmpty()
   @MinLength(6, { message: 'Code must contain at least 6 characters' })

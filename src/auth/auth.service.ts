@@ -1,6 +1,6 @@
 import { Injectable, HttpStatus, HttpException } from '@nestjs/common';
 import { ConfirmSignupDto, LoginDto, SignupDto } from './dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import {
   CognitoIdentityProviderClient,
   InitiateAuthCommand,
