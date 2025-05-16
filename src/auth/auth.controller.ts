@@ -1,7 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
-import { SignupDto } from './dto/signup.dto';
+import { ConfirmSignupDto, LoginDto, SignupDto } from './dto';
 
 @Controller('auth')
 export class AuthController {
@@ -15,5 +14,10 @@ export class AuthController {
   @Post('signup')
   signUp(@Body() signupDto: SignupDto) {
     return this.authService.signUpWithCognito(signupDto);
+  }
+
+  @Post('confirm-email')
+  confirm(@Body() confirmSignipDto: ConfirmSignupDto) {
+    return this.authService.confirmSignUp(confirmSignipDto);
   }
 }

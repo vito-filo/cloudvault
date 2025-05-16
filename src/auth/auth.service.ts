@@ -1,12 +1,13 @@
 import { Injectable, HttpStatus, HttpException } from '@nestjs/common';
-import { LoginDto } from './dto/login.dto';
-import { SignupDto } from './dto/signup.dto';
+import { ConfirmSignupDto, LoginDto, SignupDto } from './dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 import {
   CognitoIdentityProviderClient,
   InitiateAuthCommand,
   SignUpCommand,
   SignUpCommandOutput,
   InitiateAuthCommandOutput,
+  ConfirmSignUpCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 import * as crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
@@ -15,13 +16,20 @@ import { ConfigService } from '@nestjs/config';
 export class AuthService {
   private readonly CLIENT_ID: string;
   private readonly CLIENT_SECRET: string;
+  private readonly client: CognitoIdentityProviderClient;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {
     this.CLIENT_ID = this.configService.get<string>('CLIENT_ID', 'undefined');
     this.CLIENT_SECRET = this.configService.get<string>(
       'CLIENT_SECRET',
       'undefined',
     );
+    this.client = new CognitoIdentityProviderClient({
+      region: 'eu-south-1',
+    });
   }
 
   private generateSecretHash(
@@ -39,10 +47,6 @@ export class AuthService {
     loginDto: LoginDto,
   ): Promise<InitiateAuthCommandOutput> {
     try {
-      const client = new CognitoIdentityProviderClient({
-        region: 'eu-south-1',
-      });
-
       const command = new InitiateAuthCommand({
         // UserPoolId: USER_POOL_ID,
         ClientId: this.CLIENT_ID,
@@ -57,7 +61,7 @@ export class AuthService {
           ),
         },
       });
-      return await client.send(command);
+      return await this.client.send(command);
     } catch (error) {
       console.error('Error during authentication:', error);
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
@@ -84,6 +88,42 @@ export class AuthService {
     } catch (error) {
       console.error('Error during sign up:', error);
       throw new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async confirmSignUp(confirmSignUpDto: ConfirmSignupDto) {
+    const command = new ConfirmSignUpCommand({
+      ClientId: this.CLIENT_ID,
+      SecretHash: this.generateSecretHash(
+        confirmSignUpDto.email,
+        this.CLIENT_ID,
+        this.CLIENT_SECRET,
+      ),
+      Username: confirmSignUpDto.email,
+      ConfirmationCode: confirmSignUpDto.code,
+    });
+
+    try {
+      const response = await this.client.send(command);
+      await this.prisma.user.upsert({
+        create: {
+          email: confirmSignUpDto.email,
+          name: confirmSignUpDto.name,
+          provider: 'Cognito',
+          providerId: confirmSignUpDto.userSub,
+          userConfirmed: true,
+        },
+        update: {
+          userConfirmed: true,
+        },
+        where: { email: confirmSignUpDto.email },
+      });
+      return response;
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Error during confirmation:', error);
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      }
     }
   }
 }
