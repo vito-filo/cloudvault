@@ -6,8 +6,20 @@ async function main() {
   // Example seeding for a User table
   await prisma.user.createMany({
     data: [
-      { name: 'Alice', email: 'alice@example.com' },
-      { name: 'Bob', email: 'bob@example.com' },
+      {
+        name: 'Alice',
+        email: 'alice@example.com',
+        provider: 'Cognito',
+        providerId: '123456678',
+        userConfirmed: true,
+      },
+      {
+        name: 'Bob',
+        email: 'bob@example.com',
+        provider: 'Cognito',
+        providerId: '123456679',
+        userConfirmed: true,
+      },
     ],
   });
 

@@ -14,10 +14,13 @@ datasource db {
 }
 
 model User {
-  id        Int       @default(autoincrement()) @id
-  email     String    @unique
-  name      String?
-  passwords Password[]
+  id            Int       @default(autoincrement()) @id
+  email         String    @unique
+  name          String?
+  provider      String   // 'google' | 'facebook' | 'cognito' | etc.
+  providerId    String   // third-party user ID, e.g. sub from JWT
+  userConfirmed Boolean   @default(false)
+  passwords     Password[]
 }
 
 model Password {
