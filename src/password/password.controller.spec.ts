@@ -13,7 +13,7 @@ import {
 import { NotFoundException } from '@nestjs/common';
 
 // This unit tests assert that the PasswordController:
-// - is defined and that the methods
+// - is defined correctly
 // - return the expected results when called with mock data.
 // - call the service methods with the correct arguments
 // - handle errors correctly
@@ -26,9 +26,7 @@ describe('PasswordController', () => {
       imports: [PrismaModule],
       controllers: [PasswordController],
       providers: [PasswordService],
-    })
-
-      .compile();
+    }).compile();
 
     controller = module.get<PasswordController>(PasswordController);
   });
