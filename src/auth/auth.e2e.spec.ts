@@ -1,10 +1,10 @@
 import * as request from 'supertest';
 import { Test } from '@nestjs/testing';
 import { SignupDto, LoginDto, ConfirmSignupDto } from './dto';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { AppModule } from '../app.module';
-import { ValidationPipe } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { Server } from 'http';
 
 // This unit tests assert that the AuthController:
 // - Validate correct input DTOs
@@ -56,6 +56,8 @@ const cases = [
 
 describe('Auth', () => {
   let app: INestApplication;
+  let httpServer: import('http').Server;
+
   const authService = {
     signUpWithCognito: jest.fn(),
     authenticateWithCognito: jest.fn(),
@@ -71,6 +73,7 @@ describe('Auth', () => {
       .compile();
 
     app = moduleRef.createNestApplication();
+    httpServer = app.getHttpServer() as unknown as Server;
     app.useGlobalPipes(new ValidationPipe());
 
     await app.init();
@@ -79,7 +82,7 @@ describe('Auth', () => {
   describe('POST /auth/signup', () => {
     it('should sign up a valid SignupDto', () => {
       const signupDto: SignupDto = validDto;
-      return request(app.getHttpServer()) // TODO fix this warning
+      return request(httpServer) // TODO fix this warning
         .post('/auth/signup')
         .send(signupDto)
         .expect(201);
@@ -89,7 +92,7 @@ describe('Auth', () => {
       'signUp should fail when $name',
       async ({ input, message }) => {
         const signupDto = Object.assign(new LoginDto(), input);
-        return request(app.getHttpServer()) // TODO fix this warning
+        return request(httpServer) // TODO fix this warning
           .post('/auth/signup')
           .send(signupDto)
           .expect(400)
@@ -106,17 +109,14 @@ describe('Auth', () => {
   describe('POST /auth/login', () => {
     it('should login a valid loginDto', () => {
       const loginDto = Object.assign(new LoginDto(), validDto);
-      return request(app.getHttpServer())
-        .post('/auth/login')
-        .send(loginDto)
-        .expect(201);
+      return request(httpServer).post('/auth/login').send(loginDto).expect(201);
     });
 
     it.each(cases)(
       'login should fail when $name',
       async ({ input, message }) => {
         const loginDto = Object.assign(new LoginDto(), input);
-        return request(app.getHttpServer())
+        return request(httpServer)
           .post('/auth/login')
           .send(loginDto)
           .expect(400)
@@ -166,7 +166,7 @@ describe('Auth', () => {
         validConfirmDto,
       );
 
-      return request(app.getHttpServer())
+      return request(httpServer)
         .post('/auth/confirm-email')
         .send(consfirmSignupDto)
         .expect(201);
@@ -176,7 +176,7 @@ describe('Auth', () => {
       'login should fail when $name',
       async ({ input, message }) => {
         const confirmSignupDto = Object.assign(new ConfirmSignupDto(), input);
-        return request(app.getHttpServer())
+        return request(httpServer)
           .post('/auth/confirm-email')
           .send(confirmSignupDto)
           .expect(400)
