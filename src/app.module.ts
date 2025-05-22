@@ -28,6 +28,13 @@ import * as Joi from 'joi';
           }),
         USER_POOL_ID: Joi.string().required(),
         REGION: Joi.string().required(),
+        AES_KEY: Joi.string()
+          .required()
+          .pattern(/^[a-zA-Z0-9_+]+$/)
+          .messages({
+            'string.pattern.base':
+              '"AES_KEY" fails to match the required pattern: /^[a-zA-Z0-9_+]+$/',
+          }),
       }),
     }),
     AuthModule,
