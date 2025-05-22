@@ -1,7 +1,6 @@
-import { Password as PasswordMOdel } from '@prisma/client';
 import { Expose } from 'class-transformer';
 
-export class GetPasswordDetailDto implements PasswordMOdel {
+export class GetPasswordDetailDto {
   @Expose() password: string;
   @Expose() id: number;
   @Expose() url: string | null;
