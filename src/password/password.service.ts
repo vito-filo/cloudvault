@@ -131,7 +131,6 @@ export class PasswordService {
         );
         updatePasswordDto.password = encryptedPassword;
         updateData = { ...updatePasswordDto, iv: iv.toString('hex') };
-        console.log('data to update', updateData);
       } else {
         updateData = { ...updatePasswordDto };
       }
