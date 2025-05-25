@@ -1,3 +1,4 @@
+import PasswordCell from "@/components/PasswordCell";
 import { PasswordItemList } from "@/types/password";
 import { apiFetch } from "@/utils/api";
 import { useEffect, useState } from "react";
@@ -31,29 +32,23 @@ export default function PasswordPage() {
   const [data, setData] = useState<PasswordItemList[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   useEffect(() => {
-    apiFetch("/password/1")
-      .then((response) => {
-        setData(response);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    fetchData();
   }, []);
 
-  const renderItem = ({ item }: { item: PasswordItemList }) => {
-    const backgroundColor = item.id === selectedId ? "#6e3b6e" : "#f9c2ff";
-    const color = item.id === selectedId ? "white" : "black";
-
-    return (
-      <Item
-        item={item}
-        onPress={() => setSelectedId(item.id)}
-        backgroundColor={backgroundColor}
-        textColor={color}
-      />
-    );
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const response = await apiFetch("/password/1");
+      setData(response);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -66,9 +61,11 @@ export default function PasswordPage() {
         ) : (
           <FlatList
             data={data}
-            renderItem={renderItem}
+            renderItem={({ item }) => <PasswordCell item={item} />}
             keyExtractor={(item) => item.id.toString()}
-            extraData={selectedId}
+            // extraData={selectedId}
+            refreshing={loading}
+            onRefresh={fetchData}
           />
         )}
       </SafeAreaView>
