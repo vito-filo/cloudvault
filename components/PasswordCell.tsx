@@ -1,6 +1,7 @@
 import { IconSymbol } from "@/components/ui/IconSymbol";
+import { useItemContext } from "@/context/ItemContext";
 import { PasswordItemList } from "@/types/password";
-import { useEffect } from "react";
+import { apiFetch } from "@/utils/api";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 // TODO  change logo
@@ -11,16 +12,25 @@ const logo = {
 };
 
 export default function PasswordCell({ item }: { item: PasswordItemList }) {
-  useEffect(() => {
-    console.log("PasswordCell mounted with item:", item);
-  });
+  const { setShouldRefresh } = useItemContext();
+
+  const deletePassword = async (passwordId: number) => {
+    try {
+      const userId = 1; // Replace with actual user ID logic
+      console.log("Deleting password with ID:", passwordId);
+      await apiFetch(`/password/${userId}/${item.id}`, { method: "DELETE" });
+      setShouldRefresh(true); // Trigger a refresh after deletion
+    } catch (error) {
+      console.error("Error deleting password:", error);
+    }
+  };
 
   return (
     <TouchableOpacity>
       <View style={styles.row}>
         <Image style={styles.icon} source={logo} />
         <Text style={styles.passwordName}>{item.serviceName}</Text>
-        <TouchableOpacity onPress={() => {}}>
+        <TouchableOpacity onPress={() => deletePassword(item.id)}>
           <IconSymbol name="trash" size={24} color="#ff0000" />
         </TouchableOpacity>
       </View>
