@@ -66,7 +66,7 @@ export default function CreatePasswordPage() {
       });
 
       setShouldRefresh(true); // Trigger refresh in context
-      router.push("/(tabs)");
+      router.navigate("/(tabs)");
     } catch (error) {
       console.error("Error submitting password:", error);
       alert("Failed to submit password. Please try again.");

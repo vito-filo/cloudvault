@@ -2,6 +2,7 @@ import { IconSymbol } from "@/components/ui/IconSymbol";
 import { useItemContext } from "@/context/ItemContext";
 import { PasswordItemList } from "@/types/password";
 import { apiFetch } from "@/utils/api";
+import { useRouter } from "expo-router";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 // TODO  change logo
@@ -13,6 +14,7 @@ const logo = {
 
 export default function PasswordCell({ item }: { item: PasswordItemList }) {
   const { setShouldRefresh } = useItemContext();
+  const router = useRouter();
 
   const deletePassword = async (passwordId: number) => {
     try {
@@ -25,8 +27,15 @@ export default function PasswordCell({ item }: { item: PasswordItemList }) {
     }
   };
 
+  const handlePress = () => {
+    router.push({
+      pathname: "/passwordDetails/[id]",
+      params: { id: item.id, name: item.serviceName },
+    });
+  };
+
   return (
-    <TouchableOpacity>
+    <TouchableOpacity onPress={() => handlePress()}>
       <View style={styles.row}>
         <Image style={styles.icon} source={logo} />
         <Text style={styles.passwordName}>{item.serviceName}</Text>
