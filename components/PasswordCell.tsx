@@ -2,8 +2,16 @@ import { IconSymbol } from "@/components/ui/IconSymbol";
 import { useItemContext } from "@/context/ItemContext";
 import { PasswordItemList } from "@/types/password";
 import { apiFetch } from "@/utils/api";
+import * as LocalAuthentication from "expo-local-authentication";
 import { useRouter } from "expo-router";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 // TODO  change logo
 const logo = {
@@ -27,11 +35,34 @@ export default function PasswordCell({ item }: { item: PasswordItemList }) {
     }
   };
 
-  const handlePress = () => {
-    router.push({
-      pathname: "/passwordDetails/[id]",
-      params: { id: item.id, name: item.serviceName },
+  const handleBiometricAuth = async (): Promise<boolean> => {
+    // If device doesn't have biometric hardware biometrics are not enrolled, use passcode to authenticate.
+    const result = await LocalAuthentication.authenticateAsync({
+      promptMessage: "Authenticate to continue",
+      fallbackLabel: "Use Passcode", // Optional
     });
+
+    if (result.success) {
+      return true;
+    } else {
+      Alert.alert("Authentication failed", result.error || "Try again");
+      return false;
+    }
+  };
+
+  const handlePress = async () => {
+    try {
+      const isAuth = await handleBiometricAuth();
+      if (isAuth) {
+        router.push({
+          pathname: "/passwordDetails/[id]",
+          params: { id: item.id, name: item.serviceName },
+        });
+      }
+    } catch (error) {
+      console.error("Error during password cell press:", error);
+      Alert.alert("Error", "Failed to get password details.");
+    }
   };
 
   return (
@@ -40,7 +71,7 @@ export default function PasswordCell({ item }: { item: PasswordItemList }) {
         <Image style={styles.icon} source={logo} />
         <Text style={styles.passwordName}>{item.serviceName}</Text>
         <TouchableOpacity onPress={() => deletePassword(item.id)}>
-          <IconSymbol name="trash" size={24} color="#ff0000" />
+          <IconSymbol name="trash.fill" size={24} color="#ff0000" />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>

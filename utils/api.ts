@@ -1,8 +1,11 @@
 // utils/api.ts
 
 // import * as SecureStore from 'expo-secure-store';
+import { Platform } from "react-native";
 
-const BASE_URL = "http://localhost:3000"; // ideally from env vars
+// TODO replace in production
+const BASE_URL =
+  Platform.OS === "android" ? `http://10.0.2.2:3000` : `http://localhost:3000`;
 
 // async function getToken() {
 //   return await SecureStore.getItemAsync('accessToken');

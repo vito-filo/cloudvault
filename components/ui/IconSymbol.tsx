@@ -13,16 +13,14 @@ type IconSymbolName = keyof typeof MAPPING;
 
 /**
  * Add your SF Symbols to Material Icons mappings here.
+ * - see list of symbols in SF and Material Icons here (https://hotpot.ai/free-icons).
  * - see Material Icons in the [Icons Directory](https://icons.expo.fyi).
  * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
  */
 const MAPPING = {
+  "trash.fill": "delete",
   "plus.rectangle.fill": "create",
   "lock.fill": "lock",
-  "house.fill": "home",
-  "paperplane.fill": "send",
-  "chevron.left.forwardslash.chevron.right": "code",
-  "chevron.right": "chevron-right",
 } as IconMapping;
 
 /**
