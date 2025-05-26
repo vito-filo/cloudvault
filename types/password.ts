@@ -5,3 +5,12 @@ export type PasswordItemList = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type InputPassword = {
+  serviceName: string;
+  password: string;
+  username?: string;
+  email?: string;
+  url?: string;
+  description?: string;
+};
