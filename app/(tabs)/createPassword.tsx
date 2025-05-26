@@ -1,3 +1,4 @@
+import { useItemContext } from "@/context/ItemContext";
 import { InputPassword } from "@/types/password";
 import { apiFetch } from "@/utils/api";
 import { useRouter } from "expo-router";
@@ -16,6 +17,7 @@ export default function CreatePasswordPage() {
 
   const [isPasswordValid, setIsPasswordValid] = useState(true);
   const [isServiceNameValid, setIsServiceNameValid] = useState(true);
+  const { setShouldRefresh } = useItemContext();
 
   useEffect(() => {
     // Reset validation states when the component mounts
@@ -63,6 +65,7 @@ export default function CreatePasswordPage() {
         body: JSON.stringify(inputData),
       });
 
+      setShouldRefresh(true); // Trigger refresh in context
       router.push("/(tabs)");
     } catch (error) {
       console.error("Error submitting password:", error);

@@ -1,4 +1,5 @@
 import PasswordCell from "@/components/PasswordCell";
+import { useItemContext } from "@/context/ItemContext";
 import { PasswordItemList } from "@/types/password";
 import { apiFetch } from "@/utils/api";
 import { useEffect, useState } from "react";
@@ -8,34 +9,22 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  TouchableOpacity,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-
-type ItemProps = {
-  item: PasswordItemList;
-  onPress: () => void;
-  backgroundColor: string;
-  textColor: string;
-};
-
-const Item = ({ item, onPress, backgroundColor, textColor }: ItemProps) => (
-  <TouchableOpacity
-    onPress={onPress}
-    style={[styles.item, { backgroundColor }]}
-  >
-    <Text style={[styles.title, { color: textColor }]}>{item.serviceName}</Text>
-  </TouchableOpacity>
-);
 
 export default function PasswordPage() {
   const [data, setData] = useState<PasswordItemList[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { shouldRefresh, setShouldRefresh } = useItemContext();
 
   useEffect(() => {
     fetchData();
-  }, []);
+    if (shouldRefresh) {
+      fetchData();
+      setShouldRefresh(false); // Reset the refresh state after fetching
+    }
+  }, [shouldRefresh, setShouldRefresh]);
 
   const fetchData = async () => {
     setLoading(true);
