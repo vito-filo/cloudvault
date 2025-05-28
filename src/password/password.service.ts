@@ -11,7 +11,7 @@ import {
   GetPasswordDetailDto,
   UpdatePasswordDto,
 } from './dto';
-import { generateIV, encrypt, decrypt } from 'src/common/utils/crypto.util';
+import { generateIV, encrypt, decrypt } from '../common/utils/crypto.util';
 import { ConfigService } from '@nestjs/config';
 
 // TODO manage errors: eg not found when updating/deleting a password with wrong id

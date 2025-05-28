@@ -11,6 +11,7 @@ import {
   UpdatePasswordDto,
 } from './dto';
 import { NotFoundException } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 
 // This unit tests assert that the PasswordController:
 // - is defined correctly
@@ -23,7 +24,7 @@ describe('PasswordController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [PrismaModule],
+      imports: [PrismaModule, ConfigModule],
       controllers: [PasswordController],
       providers: [PasswordService],
     }).compile();

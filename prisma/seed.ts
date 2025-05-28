@@ -20,6 +20,13 @@ async function main() {
         providerId: '123456679',
         userConfirmed: true,
       },
+      {
+        name: 'Fartington',
+        email: 'fertemupsa@gufum.com',
+        provider: 'Cognito',
+        providerId: '123456612',
+        userConfirmed: true,
+      },
     ],
   });
 
