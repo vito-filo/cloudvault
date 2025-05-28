@@ -55,7 +55,7 @@ export class PasswordService {
           userId: userId,
           id: passwordId,
         },
-      });
+      }); // TODO currently throws 500 when not found, should throw 404
 
       if (!password) {
         throw new NotFoundException(`Item doesn't exist`);

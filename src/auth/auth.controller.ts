@@ -1,7 +1,9 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ConfirmSignupDto, LoginDto, SignupDto } from './dto';
+import { Public } from './jwt-auth.guard';
 
+@Public() // These routes as public
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
