@@ -1,16 +1,16 @@
 import { Injectable, HttpStatus, HttpException } from '@nestjs/common';
-import { ConfirmSignupDto, LoginDto, SignupDto } from './dto';
+import { ConfirmSignupDto, LoginDto, SignupDto, LoginOutputDto } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CognitoIdentityProviderClient,
   InitiateAuthCommand,
   SignUpCommand,
   SignUpCommandOutput,
-  InitiateAuthCommandOutput,
   ConfirmSignUpCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 import * as crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +21,7 @@ export class AuthService {
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
   ) {
     this.CLIENT_ID = this.configService.get<string>('CLIENT_ID', 'undefined');
     this.CLIENT_SECRET = this.configService.get<string>(
@@ -43,9 +44,7 @@ export class AuthService {
       .digest('base64');
   }
 
-  async authenticateWithCognito(
-    loginDto: LoginDto,
-  ): Promise<InitiateAuthCommandOutput> {
+  async authenticateWithCognito(loginDto: LoginDto): Promise<LoginOutputDto> {
     try {
       const command = new InitiateAuthCommand({
         // UserPoolId: USER_POOL_ID,
@@ -61,7 +60,18 @@ export class AuthService {
           ),
         },
       });
-      return await this.client.send(command);
+      await this.client.send(command);
+      const user = await this.prisma.user.findUniqueOrThrow({
+        where: { email: loginDto.email },
+      });
+      const payload = { sub: user.id, username: user.email };
+      return {
+        accessToken: await this.jwtService.signAsync(payload),
+        user: {
+          id: user.id,
+          email: user.email,
+        },
+      };
     } catch (error) {
       console.error('Error during authentication:', error);
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);

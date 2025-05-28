@@ -5,13 +5,13 @@ import { AuthController } from './auth.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthService } from './auth.service';
 import { ConfigModule } from '@nestjs/config';
-import { SignupDto, LoginDto, ConfirmSignupDto } from './dto';
+import { SignupDto, LoginDto, ConfirmSignupDto, LoginOutputDto } from './dto';
 import {
   SignUpCommandOutput,
-  InitiateAuthCommandOutput,
   ConfirmDeviceCommandOutput,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { BadRequestException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 
 // This unit tests assert that the AuthController:
 // - is defined correctly
@@ -26,7 +26,7 @@ describe('PasswordController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [PrismaModule, ConfigModule],
       controllers: [AuthController],
-      providers: [AuthService],
+      providers: [AuthService, JwtService],
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
@@ -97,16 +97,20 @@ describe('AuthController', () => {
       email: 'alice@gmail.com',
       password: 'password123',
     };
-    const mockLoginCommandOutput: InitiateAuthCommandOutput = {
-      $metadata: {},
+    const mockLoginOutputDto: LoginOutputDto = {
+      accessToken: 'mockAccessToken',
+      user: {
+        id: 123,
+        email: 'mock@email.com',
+      },
     };
     it('should call authenticateWithCognito with the correct parameters', async () => {
       jest
         .spyOn(service, 'authenticateWithCognito')
-        .mockResolvedValue(mockLoginCommandOutput);
+        .mockResolvedValue(mockLoginOutputDto);
 
       const result = await controller.signIn(mockLoginDto);
-      expect(result).toEqual(mockLoginCommandOutput);
+      expect(result).toEqual(mockLoginOutputDto);
       expect(service.authenticateWithCognito).toHaveBeenCalledWith(
         mockLoginDto,
       );
