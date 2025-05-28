@@ -11,7 +11,7 @@ function useAsyncState<T>(
     (
       state: [boolean, T | null],
       action: T | null = null
-    ): [boolean, T | null] => [false, action],
+    ): [boolean, T | null] => [false, action], // Reducer function
     initialValue
   ) as UseStateHook<T>;
 }
