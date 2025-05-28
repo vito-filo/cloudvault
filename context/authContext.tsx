@@ -28,14 +28,15 @@ export function useSession() {
   return value;
 }
 
-export function useUserData(): UserType {
+export function useUserData(): [UserType, string] {
   // This make sure that the user data is defined when using it.
   const { session } = useSession();
   if (!session) {
     throw new Error("User data is not available");
   }
   const user = JSON.parse(session).user;
-  return user;
+  const token = JSON.parse(session).accessToken;
+  return [user, token];
 }
 
 export function SessionProvider({ children }: PropsWithChildren) {

@@ -18,7 +18,7 @@ export default function PasswordPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { shouldRefresh, setShouldRefresh } = useItemContext();
-  const userData = useUserData();
+  const [userData, token] = useUserData();
 
   useEffect(() => {
     fetchData();
@@ -31,7 +31,12 @@ export default function PasswordPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await apiFetch(`/password/${userData.id}`);
+      const response = await apiFetch(`/password/${userData.id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setData(response);
     } catch (err) {
       setError(

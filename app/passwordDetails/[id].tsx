@@ -11,13 +11,18 @@ export default function PasswordDetail() {
   const [data, setData] = useState<PasswordItemDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const userData = useUserData();
+  const [userData, token] = useUserData();
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await apiFetch(`/password/${userData.id}/${id}`);
+        const response = await apiFetch(`/password/${userData.id}/${id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
         setData(response);
       } catch (err) {
         setError(

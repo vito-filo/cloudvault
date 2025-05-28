@@ -19,8 +19,7 @@ export default function CreatePasswordPage() {
   const [isPasswordValid, setIsPasswordValid] = useState(true);
   const [isServiceNameValid, setIsServiceNameValid] = useState(true);
   const { setShouldRefresh } = useItemContext();
-
-  const userData = useUserData(); // get user data from authContext.
+  const [userData, token] = useUserData();
 
   useEffect(() => {
     // Reset validation states when the component mounts
@@ -64,6 +63,10 @@ export default function CreatePasswordPage() {
     try {
       await apiFetch(`/password/${userData.id}`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(inputData),
       });
 

@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/IconSymbol";
+import { useUserData } from "@/context/authContext";
 import { useItemContext } from "@/context/ItemContext";
 import { PasswordItemList } from "@/types/password";
 import { apiFetch } from "@/utils/api";
@@ -23,14 +24,20 @@ const logo = {
 export default function PasswordCell({ item }: { item: PasswordItemList }) {
   const { setShouldRefresh } = useItemContext();
   const router = useRouter();
+  const [userData, token] = useUserData();
 
   const deletePassword = async (passwordId: number) => {
     try {
-      const userId = 1; // Replace with actual user ID logic
-      console.log("Deleting password with ID:", passwordId);
-      await apiFetch(`/password/${userId}/${item.id}`, { method: "DELETE" });
+      await apiFetch(`/password/${userData.id}/${item.id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        method: "DELETE",
+      });
       setShouldRefresh(true); // Trigger a refresh after deletion
     } catch (error) {
+      Alert.alert("Error", "Failed to delete password.");
       console.error("Error deleting password:", error);
     }
   };
