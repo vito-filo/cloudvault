@@ -1,3 +1,4 @@
+import { useUserData } from "@/context/authContext";
 import { useItemContext } from "@/context/ItemContext";
 import { InputPassword } from "@/types/password";
 import { apiFetch } from "@/utils/api";
@@ -18,6 +19,8 @@ export default function CreatePasswordPage() {
   const [isPasswordValid, setIsPasswordValid] = useState(true);
   const [isServiceNameValid, setIsServiceNameValid] = useState(true);
   const { setShouldRefresh } = useItemContext();
+
+  const userData = useUserData(); // get user data from authContext.
 
   useEffect(() => {
     // Reset validation states when the component mounts
@@ -49,7 +52,6 @@ export default function CreatePasswordPage() {
     if (!validateInput()) {
       return; // Stop submission if validation fails
     }
-    const userId = 1; // TODO Replace with actual user ID logic
     const inputData: InputPassword = {
       serviceName: serviceName,
       password: password,
@@ -60,7 +62,7 @@ export default function CreatePasswordPage() {
     };
 
     try {
-      await apiFetch(`/password/${userId}`, {
+      await apiFetch(`/password/${userData.id}`, {
         method: "POST",
         body: JSON.stringify(inputData),
       });

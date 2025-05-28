@@ -25,7 +25,7 @@ const linkedin = require("../assets/images/favicon.png");
 const tiktok = require("../assets/images/favicon.png");
 
 export default function Login() {
-  const { signIn, session } = useSession();
+  const { signIn } = useSession();
   const [click, setClick] = useState(false);
   const [email, setEmail] = useState("fertemupsa@gufum.com");
   const [password, setPassword] = useState("ExamplePassword123!");

@@ -1,3 +1,4 @@
+import { useUserData } from "@/context/authContext";
 import { PasswordItemDetail } from "@/types/password";
 import { apiFetch } from "@/utils/api";
 import { useLocalSearchParams, useNavigation } from "expo-router";
@@ -10,13 +11,13 @@ export default function PasswordDetail() {
   const [data, setData] = useState<PasswordItemDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const userData = useUserData();
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const userId = 1; // TODO Replace with actual user ID logic
       try {
-        const response = await apiFetch(`/password/${userId}/${id}`);
+        const response = await apiFetch(`/password/${userData.id}/${id}`);
         setData(response);
       } catch (err) {
         setError(

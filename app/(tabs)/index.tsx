@@ -1,4 +1,5 @@
 import PasswordCell from "@/components/PasswordCell";
+import { useUserData } from "@/context/authContext";
 import { useItemContext } from "@/context/ItemContext";
 import { PasswordItemList } from "@/types/password";
 import { apiFetch } from "@/utils/api";
@@ -17,6 +18,7 @@ export default function PasswordPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { shouldRefresh, setShouldRefresh } = useItemContext();
+  const userData = useUserData();
 
   useEffect(() => {
     fetchData();
@@ -29,7 +31,7 @@ export default function PasswordPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await apiFetch("/password/1");
+      const response = await apiFetch(`/password/${userData.id}`);
       setData(response);
     } catch (err) {
       setError(
