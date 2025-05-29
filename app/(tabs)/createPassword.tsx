@@ -1,7 +1,7 @@
 import { useUserData } from "@/context/authContext";
 import { useItemContext } from "@/context/ItemContext";
+import { useApi } from "@/hooks/useApi";
 import { InputPassword } from "@/types/password";
-import { apiFetch } from "@/utils/api";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Button, StyleSheet, TextInput } from "react-native";
@@ -20,6 +20,7 @@ export default function CreatePasswordPage() {
   const [isServiceNameValid, setIsServiceNameValid] = useState(true);
   const { setShouldRefresh } = useItemContext();
   const [userData, token] = useUserData();
+  const { apiFetch } = useApi();
 
   useEffect(() => {
     // Reset validation states when the component mounts

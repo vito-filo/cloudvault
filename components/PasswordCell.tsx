@@ -1,8 +1,8 @@
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { useUserData } from "@/context/authContext";
 import { useItemContext } from "@/context/ItemContext";
+import { useApi } from "@/hooks/useApi";
 import { PasswordItemList } from "@/types/password";
-import { apiFetch } from "@/utils/api";
 import * as LocalAuthentication from "expo-local-authentication";
 import { useRouter } from "expo-router";
 import {
@@ -25,6 +25,7 @@ export default function PasswordCell({ item }: { item: PasswordItemList }) {
   const { setShouldRefresh } = useItemContext();
   const router = useRouter();
   const [userData, token] = useUserData();
+  const { apiFetch } = useApi();
 
   const deletePassword = async (passwordId: number) => {
     try {

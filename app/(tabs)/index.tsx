@@ -1,8 +1,8 @@
 import PasswordCell from "@/components/PasswordCell";
 import { useUserData } from "@/context/authContext";
 import { useItemContext } from "@/context/ItemContext";
+import { useApi } from "@/hooks/useApi";
 import { PasswordItemList } from "@/types/password";
-import { apiFetch } from "@/utils/api";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -19,6 +19,7 @@ export default function PasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const { shouldRefresh, setShouldRefresh } = useItemContext();
   const [userData, token] = useUserData();
+  const { apiFetch } = useApi();
 
   useEffect(() => {
     fetchData();
@@ -31,12 +32,15 @@ export default function PasswordPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await apiFetch(`/password/${userData.id}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await apiFetch<PasswordItemList[]>(
+        `/password/${userData.id}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       setData(response);
     } catch (err) {
       setError(

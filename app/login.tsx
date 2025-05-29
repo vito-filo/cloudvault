@@ -15,7 +15,7 @@ import {
 } from "react-native";
 
 import { useSession } from "@/context/authContext";
-import { apiFetch } from "@/utils/api";
+import { useApi } from "@/hooks/useApi";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 
@@ -31,6 +31,7 @@ export default function Login() {
   const [password, setPassword] = useState("ExamplePassword123!");
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
+  const { apiFetch } = useApi();
 
   const router = useRouter();
 
@@ -53,7 +54,7 @@ export default function Login() {
     }
 
     try {
-      const response = await apiFetch("/auth/login", {
+      const response = await apiFetch<{ accessToken: string }>("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
