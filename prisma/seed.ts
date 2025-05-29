@@ -4,30 +4,32 @@ const prisma = new PrismaClient();
 
 async function main() {
   // Example seeding for a User table
-  await prisma.user.createMany({
-    data: [
-      {
-        name: 'Alice',
-        email: 'alice@example.com',
-        provider: 'Cognito',
-        providerId: '123456678',
-        userConfirmed: true,
-      },
-      {
-        name: 'Bob',
-        email: 'bob@example.com',
-        provider: 'Cognito',
-        providerId: '123456679',
-        userConfirmed: true,
-      },
-      {
-        name: 'Fartington',
-        email: 'fertemupsa@gufum.com',
-        provider: 'Cognito',
-        providerId: '123456612',
-        userConfirmed: true,
-      },
-    ],
+  const alice = await prisma.user.create({
+    data: {
+      name: 'Alice',
+      email: 'alice@example.com',
+      provider: 'Cognito',
+      providerId: '123456678',
+      userConfirmed: true,
+    },
+  });
+  const fartington = await prisma.user.create({
+    data: {
+      name: 'Fartington',
+      email: 'fertemupsa@gufum.com',
+      provider: 'Cognito',
+      providerId: '123456612',
+      userConfirmed: true,
+    },
+  });
+
+  await prisma.group.create({
+    data: {
+      name: 'Family',
+      description: 'Group for family members',
+      users: { connect: [{ id: alice.id }, { id: fartington.id }] },
+      admins: { connect: [{ id: fartington.id }] },
+    },
   });
 
   // await prisma.password.createMany({
