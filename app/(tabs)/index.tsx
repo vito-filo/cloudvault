@@ -1,9 +1,8 @@
 import PasswordCell from "@/components/PasswordCell";
 import { useUserData } from "@/context/authContext";
-import { useItemContext } from "@/context/ItemContext";
 import { useApi } from "@/hooks/useApi";
 import { PasswordItemList } from "@/types/password";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -17,19 +16,11 @@ export default function PasswordPage() {
   const [data, setData] = useState<PasswordItemList[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { shouldRefresh, setShouldRefresh } = useItemContext();
   const [userData, token] = useUserData();
   const { apiFetch } = useApi();
 
-  useEffect(() => {
-    fetchData();
-    if (shouldRefresh) {
-      fetchData();
-      setShouldRefresh(false); // Reset the refresh state after fetching
-    }
-  }, [shouldRefresh, setShouldRefresh]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    console.log("Fetch data called");
     setLoading(true);
     try {
       const response = await apiFetch<PasswordItemList[]>(
@@ -49,7 +40,11 @@ export default function PasswordPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiFetch, userData.id, token]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   return (
     <SafeAreaProvider>
