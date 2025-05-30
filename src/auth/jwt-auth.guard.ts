@@ -41,7 +41,7 @@ export class AuthGuard implements CanActivate {
     const request: Request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
     if (!token) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('No Authorization header found');
     }
     try {
       const payload: JwtPayload = await this.jwtService.verifyAsync<JwtPayload>(
