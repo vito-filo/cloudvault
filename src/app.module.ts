@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { PasswordModule } from './password/password.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { GroupModule } from './group/group.module';
 import * as Joi from 'joi';
 
 @Module({
@@ -42,6 +43,7 @@ import * as Joi from 'joi';
     AuthModule,
     PasswordModule,
     PrismaModule,
+    GroupModule,
   ],
   controllers: [AppController],
   providers: [AppService],
