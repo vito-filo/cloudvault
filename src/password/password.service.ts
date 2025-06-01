@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { plainToInstance } from 'class-transformer';
@@ -27,10 +28,10 @@ export class PasswordService {
     this.KEY = Buffer.from(key, 'hex');
   }
 
-  async getAllPasswords(userId: number): Promise<GetPasswordDto[]> {
+  async getAllPasswords(userId: string): Promise<GetPasswordDto[]> {
     const passwordList = await this.prisma.password.findMany({
       where: {
-        userId: userId,
+        ownerId: userId,
       },
       select: {
         id: true,
@@ -46,13 +47,13 @@ export class PasswordService {
   }
 
   async getPasswordById(
-    userId: number,
-    passwordId: number,
+    userId: string,
+    passwordId: string,
   ): Promise<GetPasswordDetailDto> {
     try {
       const password = await this.prisma.password.findFirst({
         where: {
-          userId: userId,
+          ownerId: userId,
           id: passwordId,
         },
       }); // TODO currently throws 500 when not found, should throw 404
@@ -79,7 +80,7 @@ export class PasswordService {
   }
 
   async createPassword(
-    userId: number,
+    userId: string,
     createPasswordDto: CreatePasswordDto,
   ): Promise<GetPasswordDto> {
     try {
@@ -89,12 +90,20 @@ export class PasswordService {
         this.KEY,
         iv,
       );
+
+      const { groupIds, ...passwordData } = createPasswordDto;
+
       const response = await this.prisma.password.create({
         data: {
-          ...createPasswordDto,
-          userId: userId,
+          ...passwordData,
+          ownerId: userId,
           iv: iv.toString('hex'),
           password: encryptedPassword,
+          groupShares: {
+            create: groupIds?.map((groupId) => ({
+              group: { connect: { id: groupId } }, // Corrected syntax
+            })),
+          },
         },
         select: {
           id: true,
@@ -114,8 +123,8 @@ export class PasswordService {
   }
 
   async updatePassword(
-    userId: number,
-    passwordId: number,
+    userId: string,
+    passwordId: string,
     updatePasswordDto: UpdatePasswordDto,
   ): Promise<GetPasswordDto> {
     try {
@@ -138,7 +147,7 @@ export class PasswordService {
       const password = await this.prisma.password.update({
         where: {
           id: passwordId,
-          userId: userId,
+          ownerId: userId,
         },
         data: updateData,
         select: {
@@ -159,13 +168,19 @@ export class PasswordService {
   }
 
   async deletePassword(
-    userId: number,
-    passwordId: number,
+    userId: string,
+    passwordId: string,
   ): Promise<GetPasswordDto> {
+    // Check if the password exists and belongs to the user
+    const isOwner = await this.prisma.isPasswordOwner(userId, passwordId);
+    if (!isOwner) {
+      throw new UnauthorizedException(`You are not the owner of this password`);
+    }
+
     const password = await this.prisma.password.delete({
       where: {
         id: passwordId,
-        userId: userId,
+        ownerId: userId,
       },
       select: {
         id: true,

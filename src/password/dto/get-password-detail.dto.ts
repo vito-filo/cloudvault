@@ -2,7 +2,7 @@ import { Expose } from 'class-transformer';
 
 export class GetPasswordDetailDto {
   @Expose() password: string;
-  @Expose() id: number;
+  @Expose() id: string;
   @Expose() url: string | null;
   @Expose() serviceName: string;
   @Expose() username: string | null;

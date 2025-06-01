@@ -66,14 +66,14 @@ describe('PasswordController', () => {
     it('should return all passwords for a user', async () => {
       const mockPasswordsList: GetPasswordDto[] = [
         {
-          id: 1,
+          id: 'abc123',
           serviceName: 'Test',
           url: 'http://test.com',
           createdAt: new Date(),
           updatedAt: new Date(),
         },
         {
-          id: 2,
+          id: 'def456',
           serviceName: 'Test2',
           url: 'http://test2.com',
           createdAt: new Date(),
@@ -84,16 +84,16 @@ describe('PasswordController', () => {
         .spyOn(service, 'getAllPasswords')
         .mockResolvedValue(mockPasswordsList);
 
-      const result = await controller.findAll('1');
+      const result = await controller.findAll('uuid123');
       expect(result).toEqual(mockPasswordsList);
-      expect(service.getAllPasswords).toHaveBeenCalledWith(1);
+      expect(service.getAllPasswords).toHaveBeenCalledWith('uuid123');
     });
   });
 
   describe('findOne', () => {
     it('should return a specific password', async () => {
       const mockPasswordDetail: GetPasswordDetailDto = {
-        id: 1,
+        id: '1',
         password: 'password',
         serviceName: 'Test',
         url: null,
@@ -111,7 +111,7 @@ describe('PasswordController', () => {
 
       const result = await controller.findOne('1', '1');
       expect(result).toEqual(mockPasswordDetail);
-      expect(service.getPasswordById).toHaveBeenCalledWith(1, 1);
+      expect(service.getPasswordById).toHaveBeenCalledWith('1', '1');
     });
 
     it('should throw NotFoundException if password is not found', async () => {
@@ -128,7 +128,7 @@ describe('PasswordController', () => {
   describe('create', () => {
     it('should create a new password', async () => {
       const mockCreatePasswordRes = {
-        id: 1,
+        id: '1',
         serviceName: 'Test',
         url: 'http://test.com',
         createdAt: new Date(),
@@ -143,16 +143,16 @@ describe('PasswordController', () => {
         .spyOn(service, 'createPassword')
         .mockResolvedValue(mockCreatePasswordRes);
 
-      const result = await controller.create(1, createDto);
+      const result = await controller.create('1', createDto);
       expect(result).toEqual(mockCreatePasswordRes);
-      expect(service.createPassword).toHaveBeenCalledWith(1, createDto);
+      expect(service.createPassword).toHaveBeenCalledWith('1', createDto);
     });
   });
 
   describe('update', () => {
     it('should update an existing password', async () => {
       const mockPassword = {
-        id: 1,
+        id: '1',
         serviceName: 'Updated',
         url: 'http://updated.com',
         createdAt: new Date(),
@@ -164,16 +164,16 @@ describe('PasswordController', () => {
       };
       jest.spyOn(service, 'updatePassword').mockResolvedValue(mockPassword);
 
-      const result = await controller.update(1, 1, updateDto);
+      const result = await controller.update('1', '1', updateDto);
       expect(result).toEqual(mockPassword);
-      expect(service.updatePassword).toHaveBeenCalledWith(1, 1, updateDto);
+      expect(service.updatePassword).toHaveBeenCalledWith('1', '1', updateDto);
     });
   });
 
   describe('delete', () => {
     it('should delete a password', async () => {
       const mockPassword = {
-        id: 1,
+        id: '1',
         serviceName: 'Test',
         url: 'http://test.com',
         createdAt: new Date(),
@@ -181,9 +181,9 @@ describe('PasswordController', () => {
       };
       jest.spyOn(service, 'deletePassword').mockResolvedValue(mockPassword);
 
-      const result = await controller.delete(1, 1);
+      const result = await controller.delete('1', '1');
       expect(result).toEqual(mockPassword);
-      expect(service.deletePassword).toHaveBeenCalledWith(1, 1);
+      expect(service.deletePassword).toHaveBeenCalledWith('1', '1');
     });
   });
 });

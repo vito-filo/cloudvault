@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Get,
-  ParseIntPipe,
   Post,
   Patch,
   Delete,
@@ -22,7 +21,7 @@ export class PasswordController {
   // Get all passwords for a specific user
   @Get(':id')
   findAll(@Param('id') id: string): Promise<GetPasswordDto[]> {
-    return this.passwordService.getAllPasswords(+id);
+    return this.passwordService.getAllPasswords(id);
   }
 
   // Get details of a specific user's password
@@ -31,13 +30,13 @@ export class PasswordController {
     @Param('id') id: string,
     @Param('passwordId') passwordId: string,
   ): Promise<GetPasswordDetailDto | null> {
-    return this.passwordService.getPasswordById(+id, +passwordId);
+    return this.passwordService.getPasswordById(id, passwordId);
   }
 
   // Create a new password
   @Post(':id')
   create(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() createPasswordDto: CreatePasswordDto,
   ): Promise<GetPasswordDto> {
     return this.passwordService.createPassword(id, createPasswordDto);
@@ -46,8 +45,8 @@ export class PasswordController {
   // Update an existing password
   @Patch(':id/:passwordId')
   update(
-    @Param('id', ParseIntPipe) id: number,
-    @Param('passwordId', ParseIntPipe) passwordId: number,
+    @Param('id') id: string,
+    @Param('passwordId') passwordId: string,
     @Body() updatePasswordDto: UpdatePasswordDto,
   ): Promise<GetPasswordDto> {
     return this.passwordService.updatePassword(
@@ -60,8 +59,8 @@ export class PasswordController {
   // Delete a password
   @Delete(':id/:passwordId')
   delete(
-    @Param('id', ParseIntPipe) id: number,
-    @Param('passwordId', ParseIntPipe) passwordId: number,
+    @Param('id') id: string,
+    @Param('passwordId') passwordId: string,
   ): Promise<GetPasswordDto> {
     return this.passwordService.deletePassword(id, passwordId);
   }

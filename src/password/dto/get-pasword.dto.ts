@@ -4,7 +4,7 @@ import { Expose } from 'class-transformer';
 // used for listing all passwords, or returning a created/updated passeword info.
 export class GetPasswordDto {
   @Expose()
-  id: number;
+  id: string;
 
   @Expose()
   serviceName: string | null;
