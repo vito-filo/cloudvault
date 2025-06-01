@@ -100,7 +100,7 @@ describe('AuthController', () => {
     const mockLoginOutputDto: LoginOutputDto = {
       accessToken: 'mockAccessToken',
       user: {
-        id: 123,
+        id: '123',
         email: 'mock@email.com',
       },
     };

@@ -1,7 +1,7 @@
 export class LoginOutputDto {
   accessToken: string;
   user: {
-    id: number;
+    id: string;
     email: string;
   };
 }
