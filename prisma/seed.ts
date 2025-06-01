@@ -1,18 +1,19 @@
 // prisma/seed.ts
 import { PrismaClient } from '@prisma/client';
+import { generateIV, encrypt } from '../src/common/utils/crypto.util';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 const prisma = new PrismaClient();
 
 async function main() {
   // Example seeding for a User table
-  const alice = await prisma.user.create({
-    data: {
-      name: 'Alice',
-      email: 'alice@example.com',
-      provider: 'Cognito',
-      providerId: '123456678',
-      userConfirmed: true,
-    },
-  });
+
+  const key = Buffer.from(
+    process.env.AES_KEY || '0123456789abcdef0123456789abcdef', // 32 bytes for AES-256
+    'hex',
+  );
+
   const fartington = await prisma.user.create({
     data: {
       name: 'Fartington',
@@ -22,65 +23,97 @@ async function main() {
       userConfirmed: true,
     },
   });
+  const alice = await prisma.user.create({
+    data: {
+      name: 'Alice',
+      email: 'alice@example.com',
+      provider: 'Cognito',
+      providerId: '123456678',
+      userConfirmed: true,
+    },
+  });
 
+  // Google passowrd for Fartington
+  let iv = generateIV();
+  await prisma.password.create({
+    data: {
+      url: 'https://google.com',
+      serviceName: 'Google',
+      username: fartington.name,
+      email: fartington.email,
+      password: encrypt('ExamplePassword123!', key, iv),
+      iv: iv.toString('hex'),
+      description: 'My Google account',
+      owner: { connect: { id: fartington.id } },
+    },
+  });
+  // Facebook password for Fartington
+  iv = generateIV();
+  await prisma.password.create({
+    data: {
+      url: 'https://facebook.com',
+      serviceName: 'Facebook',
+      username: fartington.name,
+      email: fartington.email,
+      password: encrypt('AnotherPassword456!', key, iv),
+      iv: iv.toString('hex'),
+      description: 'My Facebook account',
+      owner: { connect: { id: fartington.id } },
+    },
+  });
+
+  // Twitter password for Alice
+  iv = generateIV();
+  await prisma.password.create({
+    data: {
+      url: 'https://twitter.com',
+      serviceName: 'Twitter',
+      username: alice.name,
+      email: alice.email,
+      password: encrypt('AliceTwitterPass789!', key, iv),
+      iv: iv.toString('hex'),
+      description: 'My Twitter account',
+      owner: { connect: { id: alice.id } },
+    },
+  });
+
+  // Netflix password for Family
+  iv = generateIV();
+  const netflixFamily = await prisma.password.create({
+    data: {
+      url: 'https://netflix.com',
+      serviceName: 'Netflix',
+      username: 'FamilyAccount',
+      email: 'family@email.com',
+      password: encrypt('FamilyNetflixPass123!', key, iv),
+      iv: iv.toString('hex'),
+      description: 'Family Netflix account',
+      owner: { connect: { id: fartington.id } },
+    },
+  });
+
+  // Group Family for Fartington and Alice
   await prisma.group.create({
     data: {
       name: 'Family',
       description: 'Group for family members',
-      users: { connect: [{ id: alice.id }, { id: fartington.id }] },
-      admins: { connect: [{ id: fartington.id }] },
+      createdBy: { connect: { id: fartington.id } },
+      members: {
+        create: [
+          { user: { connect: { id: fartington.id } }, isAdmin: true },
+          { user: { connect: { id: alice.id } }, isAdmin: false },
+        ],
+      },
+      sharedPasswords: {
+        create: [
+          {
+            password: { connect: { id: netflixFamily.id } },
+          },
+        ],
+      },
     },
   });
 
-  // await prisma.password.createMany({
-  //   data: [
-  //     {
-  //       userId: 1,
-  //       url: 'google.com',
-  //       serviceName: 'Google',
-  //       username: 'Alice',
-  //       email: 'alice@example.com',
-  //       password: 'password123',
-  //       description: 'My Google account',
-  //     },
-  //     {
-  //       userId: 1,
-  //       url: 'facebook.com',
-  //       serviceName: 'Facebook',
-  //       username: 'AliceFB',
-  //       email: 'alice.fb@example.com',
-  //       password: 'fbpassword123',
-  //       description: 'My Facebook account',
-  //     },
-  //     {
-  //       userId: 2,
-  //       url: 'twitter.com',
-  //       serviceName: 'Twitter',
-  //       username: 'BobTw',
-  //       email: 'bob.tw@example.com',
-  //       password: 'twpassword456',
-  //       description: 'My Twitter account',
-  //     },
-  //     {
-  //       userId: 2,
-  //       url: 'linkedin.com',
-  //       serviceName: 'LinkedIn',
-  //       username: 'BobLinkedIn',
-  //       email: 'bob.linkedin@example.com',
-  //       password: 'linkedin789',
-  //       description: 'My LinkedIn account',
-  //     },
-  //     {
-  //       userId: 1,
-  //       url: 'github.com',
-  //       serviceName: 'GitHub',
-  //       username: 'AliceGH',
-  //       email: 'alice.gh@example.com',
-  //       password: 'ghpassword321',
-  //       description: 'My GitHub account',
-  //     },
-  //   ],
-  // });
   console.log('✅ Database seeded successfully!');
 }
 
