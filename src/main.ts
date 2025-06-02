@@ -6,7 +6,12 @@ import { LoggingMiddleware } from './middleware/logging.middleware';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Removes unexpected fields
+      forbidNonWhitelisted: true, // Throw an error for unexpected fields
+    }),
+  );
   app.use(new LoggingMiddleware().use);
 
   app.enableCors({
