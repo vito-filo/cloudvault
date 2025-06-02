@@ -2,12 +2,13 @@ import { GroupService } from './group.service';
 import {
   Body,
   Controller,
-  ParseIntPipe,
+  Get,
   Post,
   Delete,
   Param,
+  Patch,
 } from '@nestjs/common';
-import { CreateGroupDto, GetGroupDto } from './dto';
+import { CreateGroupDto, GetGroupDto, UpdateGroupDto } from './dto';
 
 @Controller('group')
 export class GroupController {
@@ -15,24 +16,31 @@ export class GroupController {
 
   @Post(':userId')
   createGroup(
-    @Param('userId', ParseIntPipe) userId: number,
+    @Param('userId') userId: string,
     @Body() CreateGroupDto: CreateGroupDto,
   ): Promise<GetGroupDto> {
     return this.groupService.createGroup(userId, CreateGroupDto);
   }
 
-  // @Get(':userId')
-  // getGroups(
-  //   @Param('userId', ParseIntPipe) userId: number,
-  // ): Promise<GetGroupDto[]> {
-  //   return this.groupService.getAllGroups(userId);
-  // }
+  @Get(':userId')
+  getGroups(@Param('userId') userId: string): Promise<GetGroupDto[]> {
+    return this.groupService.getAllGroups(userId);
+  }
 
   @Delete(':userId/:groupId')
   deleteGroup(
-    @Param('userId', ParseIntPipe) userId: number,
-    @Param('groupId', ParseIntPipe) groupId: number,
+    @Param('userId') userId: string,
+    @Param('groupId') groupId: string,
   ): Promise<void> {
     return this.groupService.deleteGroup(userId, groupId);
+  }
+
+  @Patch(':userId/:groupId')
+  updateGroup(
+    @Param('userId') userId: string,
+    @Param('groupId') groupId: string,
+    @Body() updateGroupDto: UpdateGroupDto,
+  ): Promise<GetGroupDto> {
+    return this.groupService.updateGroup(userId, groupId, updateGroupDto);
   }
 }

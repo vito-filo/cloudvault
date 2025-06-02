@@ -18,10 +18,5 @@ export class CreateGroupDto {
   @IsOptional()
   @IsArray()
   @IsInt({ each: true })
-  userIds?: number[]; // Regular group members
-
-  @IsOptional()
-  @IsArray()
-  @IsInt({ each: true })
-  adminIds?: number[]; // Admin users
+  userIds?: string[]; // Regular group members
 }
