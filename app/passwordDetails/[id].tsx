@@ -1,28 +1,52 @@
 import { useUserData } from "@/context/authContext";
-import { PasswordItemDetail } from "@/types/password";
-import { apiFetch } from "@/utils/api";
+import { useApi } from "@/hooks/useApi";
+import { PasswordInput, PasswordUpdate } from "@/types/password";
 import { useLocalSearchParams, useNavigation } from "expo-router";
-import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { useEffect, useReducer, useState } from "react";
+import {
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+
+function reducer(
+  state: PasswordUpdate,
+  action: { key: string; value: string; default: string | undefined }
+) {
+  // Set updateData only if the value is different from the fetched data
+  return {
+    ...state,
+    [action.key]: action.value !== action.default ? action.value : "",
+  };
+}
 
 export default function PasswordDetail() {
+  const { apiFetch } = useApi();
+  const [data, setData] = useState<PasswordInput | null>(null);
   const { id, name } = useLocalSearchParams<{ id: string; name?: string }>();
   const navigation = useNavigation();
-  const [data, setData] = useState<PasswordItemDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userData, token] = useUserData();
+
+  const [updatedData, setUpdatedData] = useReducer(reducer, {});
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await apiFetch(`/password/${userData.id}/${id}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await apiFetch<PasswordInput>(
+          `/password/${userData.id}/${id}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         setData(response);
       } catch (err) {
         setError(
@@ -38,29 +62,122 @@ export default function PasswordDetail() {
       headerBackTitle: "Back",
     });
     fetchData();
-  }, [name, navigation, id]);
+  }, [name, navigation, id, userData.id, apiFetch, token]);
+
+  async function handleUpdate() {
+    const isEmpty = Object.values(updatedData).every((value) => value === "");
+    if (isEmpty) {
+      Alert.alert("No changes made", "Please update at least one field.");
+      return;
+    }
+
+    try {
+      const response = await apiFetch(`/password/${userData.id}/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (response) {
+        Alert.alert("Success", "Password details updated successfully.");
+        setData({
+          serviceName: updatedData.serviceName || data?.serviceName || "",
+          password: updatedData.password || data?.password || "",
+          username: updatedData.username || data?.username || "",
+          email: updatedData.email || data?.email || "",
+          url: updatedData.url || data?.url || "",
+          description: updatedData.description || data?.description || "",
+        });
+      } else {
+        Alert.alert("Error", "Failed to update password details.");
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
+    }
+  }
 
   return (
     <>
       {data && !loading ? (
         <View style={{ padding: 20 }}>
           <Text style={{ fontWeight: "bold" }}>Service Name:</Text>
-          <Text style={{ marginBottom: 20 }}>{data.serviceName}</Text>
+          {/* <Text style={{ marginBottom: 20 }}>{data.serviceName}</Text> */}
+          <TextInput
+            style={styles.input}
+            defaultValue={data.serviceName}
+            onChangeText={(text) =>
+              setUpdatedData({
+                key: "serviceName",
+                value: text,
+                default: data.serviceName,
+              })
+            }
+          />
 
           <Text style={{ fontWeight: "bold" }}>Password:</Text>
-          <Text style={{ marginBottom: 20 }}>{data.password}</Text>
+          <TextInput
+            style={styles.input}
+            defaultValue={data.password}
+            onChangeText={(text) =>
+              setUpdatedData({
+                key: "password",
+                value: text,
+                default: data.password,
+              })
+            }
+          />
 
           <Text style={{ fontWeight: "bold" }}>Username:</Text>
-          <Text style={{ marginBottom: 20 }}>{data.username}</Text>
+          <TextInput
+            style={styles.input}
+            defaultValue={data.username}
+            onChangeText={(text) =>
+              setUpdatedData({
+                key: "username",
+                value: text,
+                default: data.username,
+              })
+            }
+          />
 
           <Text style={{ fontWeight: "bold" }}>Email:</Text>
-          <Text style={{ marginBottom: 20 }}>{data.email}</Text>
+          <TextInput
+            style={styles.input}
+            defaultValue={data.email}
+            onChangeText={(text) =>
+              setUpdatedData({ key: "email", value: text, default: data.email })
+            }
+          />
 
           <Text style={{ fontWeight: "bold" }}>URL:</Text>
-          <Text style={{ marginBottom: 20 }}>{data.url}</Text>
+          <TextInput
+            style={styles.input}
+            defaultValue={data.url}
+            onChangeText={(text) =>
+              setUpdatedData({ key: "url", value: text, default: data.url })
+            }
+          />
 
           <Text style={{ fontWeight: "bold" }}>Description:</Text>
-          <Text style={{ marginBottom: 20 }}>{data.description}</Text>
+          <TextInput
+            style={styles.input}
+            defaultValue={data.description}
+            onChangeText={(text) =>
+              setUpdatedData({
+                key: "description",
+                value: text,
+                default: data.description,
+              })
+            }
+          />
+          <Pressable style={styles.button} onPress={handleUpdate}>
+            <Text style={styles.buttonText}>UPDATE</Text>
+          </Pressable>
         </View>
       ) : loading ? (
         <Text>Loading...</Text>
@@ -72,3 +189,28 @@ export default function PasswordDetail() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  input: {
+    height: 50,
+    paddingHorizontal: 20,
+    borderColor: "black",
+    borderWidth: 1,
+    borderRadius: 7,
+  },
+  button: {
+    backgroundColor: "red",
+    height: 45,
+    borderColor: "gray",
+    borderWidth: 1,
+    borderRadius: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+});

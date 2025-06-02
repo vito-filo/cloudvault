@@ -6,7 +6,7 @@ export type PasswordItemList = {
   updatedAt: Date;
 };
 
-export type InputPassword = {
+export type PasswordInput = {
   serviceName: string;
   password: string;
   username?: string;
@@ -25,4 +25,13 @@ export type PasswordItemDetail = {
   description?: string;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type PasswordUpdate = {
+  serviceName?: string;
+  password?: string;
+  username?: string;
+  email?: string;
+  url?: string;
+  description?: string;
 };
