@@ -32,6 +32,7 @@ export class PasswordService {
     const passwordList = await this.prisma.password.findMany({
       where: {
         ownerId: userId,
+        groupShares: { none: {} }, // Exclude shared passwords
       },
       select: {
         id: true,
