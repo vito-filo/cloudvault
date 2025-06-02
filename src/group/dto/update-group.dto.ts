@@ -1,4 +1,6 @@
+import { IsString } from 'class-validator';
+
 export class UpdateGroupDto {
-  name?: string;
-  description?: string;
+  @IsString() name?: string;
+  @IsString() description?: string;
 }
