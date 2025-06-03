@@ -18,6 +18,7 @@ type IconSymbolName = keyof typeof MAPPING;
  * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
  */
 const MAPPING = {
+  "person.3.fill": "group",
   "trash.fill": "delete",
   "plus.rectangle.fill": "create",
   "lock.fill": "lock",
