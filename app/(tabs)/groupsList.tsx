@@ -11,7 +11,6 @@ import {
   Alert,
   FlatList,
   SafeAreaView,
-  StyleSheet,
   Text,
   TouchableOpacity,
 } from "react-native";
@@ -87,7 +86,7 @@ export default function GroupsList() {
           />
         )}
         <TouchableOpacity
-          style={styles.addButton}
+          style={listStyle.addButton}
           onPress={() => {
             router.navigate("/createGroup");
           }}
@@ -102,17 +101,3 @@ export default function GroupsList() {
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  addButton: {
-    position: "absolute",
-    bottom: 80,
-    right: 30,
-    width: 55,
-    height: 55,
-    backgroundColor: "#FF3F33",
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});

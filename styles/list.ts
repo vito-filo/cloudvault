@@ -13,4 +13,15 @@ export const listStyle = StyleSheet.create({
   title: {
     fontSize: 32,
   },
+  addButton: {
+    position: "absolute",
+    bottom: 80,
+    right: 30,
+    width: 55,
+    height: 55,
+    backgroundColor: "#FF3F33",
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });

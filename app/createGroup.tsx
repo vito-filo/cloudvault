@@ -1,16 +1,10 @@
 import { useUserData } from "@/context/authContext";
 import { useApi } from "@/hooks/useApi";
+import { formStyle } from "@/styles/createForm";
 import { GroupInput } from "@/types/group";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import {
-  Alert,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
 
 export default function PasswordDetail() {
   const { groupIdParam, groupNameParam } = useLocalSearchParams<{
@@ -108,7 +102,7 @@ export default function PasswordDetail() {
       <Text style={{ fontWeight: "bold" }}>Group Name:</Text>
       {/* <Text style={{ marginBottom: 20 }}>{data.serviceName}</Text> */}
       <TextInput
-        style={styles.input}
+        style={formStyle.input}
         placeholder="Enter group name"
         defaultValue={groupName}
         onChangeText={setGroupName}
@@ -116,41 +110,16 @@ export default function PasswordDetail() {
 
       <Text style={{ fontWeight: "bold" }}>Description</Text>
       <TextInput
-        style={styles.input}
+        style={formStyle.input}
         placeholder="Enter group description"
         defaultValue={grouDescription}
         onChangeText={setGroupDescription}
       />
-      <Pressable style={styles.button} onPress={handlePress}>
-        <Text style={styles.buttonText}>
+      <Pressable style={formStyle.button} onPress={handlePress}>
+        <Text style={formStyle.buttonText}>
           {groupIdParam ? "UPDATE" : "CREATE"}
         </Text>
       </Pressable>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  input: {
-    height: 50,
-    paddingHorizontal: 20,
-    borderColor: "black",
-    borderWidth: 1,
-    borderRadius: 7,
-  },
-  button: {
-    backgroundColor: "red",
-    height: 45,
-    borderColor: "gray",
-    borderWidth: 1,
-    borderRadius: 5,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 20,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-});
