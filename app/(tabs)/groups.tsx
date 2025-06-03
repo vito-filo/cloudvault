@@ -3,9 +3,18 @@ import { useUserData } from "@/context/authContext";
 import { useApi } from "@/hooks/useApi";
 import { listStyle } from "@/styles/list";
 import { GroupList } from "@/types/group";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, SafeAreaView, Text } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  SafeAreaView,
+  Text,
+} from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+
+// This component fetches and displays a list of groups for the user.
 
 export default function GroupsPage() {
   const { apiFetch } = useApi();
@@ -13,6 +22,7 @@ export default function GroupsPage() {
   const [data, setData] = useState<GroupList[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -38,6 +48,18 @@ export default function GroupsPage() {
     fetchData();
   }, [fetchData]);
 
+  const handlePress = async (item: GroupList) => {
+    try {
+      router.push({
+        pathname: "/groupPasswordList/[groupId]",
+        params: { groupId: item.id, userId: userData.id, groupName: item.name },
+      });
+    } catch (error) {
+      console.error("Error during password cell press:", error);
+      Alert.alert("Error", "Failed to get password details.");
+    }
+  };
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={listStyle.container}>
@@ -52,6 +74,7 @@ export default function GroupsPage() {
               <ItemCell
                 item={{ id: item.id, name: item.name }}
                 apiEndpoint={`/group/${userData.id}`}
+                handlePress={() => handlePress(item)}
               />
             )}
             keyExtractor={(item) => item.id.toString()}

@@ -1,6 +1,5 @@
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { useUserData } from "@/context/authContext";
-import { useItemContext } from "@/context/ItemContext";
 import { useApi } from "@/hooks/useApi";
 import { cellStyle } from "@/styles/cell";
 import { Alert, Image, Text, TouchableOpacity, View } from "react-native";
@@ -18,7 +17,6 @@ type ItemCellProps = {
 };
 
 export function ItemCell({ item, apiEndpoint, handlePress }: ItemCellProps) {
-  const { setShouldRefresh } = useItemContext();
   const [, token] = useUserData();
   const { apiFetch } = useApi();
 
@@ -31,7 +29,6 @@ export function ItemCell({ item, apiEndpoint, handlePress }: ItemCellProps) {
         },
         method: "DELETE",
       });
-      setShouldRefresh(true); // Trigger a refresh after deletion
     } catch (error) {
       Alert.alert("Error", "Failed to delete password.");
       console.error("Error deleting password:", error);
