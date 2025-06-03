@@ -9,6 +9,7 @@ import {
   GetPasswordDto,
   GetPasswordDetailDto,
   UpdatePasswordDto,
+  GetPasswordsQueryDto,
 } from './dto';
 import { NotFoundException } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -84,9 +85,10 @@ describe('PasswordController', () => {
         .spyOn(service, 'getAllPasswords')
         .mockResolvedValue(mockPasswordsList);
 
-      const result = await controller.findAll('uuid123');
+      const query: GetPasswordsQueryDto = { userId: 'uuid123' };
+      const result = await controller.findAll(query);
       expect(result).toEqual(mockPasswordsList);
-      expect(service.getAllPasswords).toHaveBeenCalledWith('uuid123');
+      expect(service.getAllPasswords).toHaveBeenCalledWith(query);
     });
   });
 

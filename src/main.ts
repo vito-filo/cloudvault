@@ -9,7 +9,8 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // Removes unexpected fields
-      forbidNonWhitelisted: true, // Throw an error for unexpected fields
+      forbidNonWhitelisted: true, // Throw an error for unexpected fields]
+      disableErrorMessages: true,
     }),
   );
   app.use(new LoggingMiddleware().use);

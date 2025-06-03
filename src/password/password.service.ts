@@ -11,9 +11,11 @@ import {
   GetPasswordDto,
   GetPasswordDetailDto,
   UpdatePasswordDto,
+  GetPasswordsQueryDto,
 } from './dto';
 import { generateIV, encrypt, decrypt } from '../common/utils/crypto.util';
 import { ConfigService } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
 
 // TODO manage errors: eg not found when updating/deleting a password with wrong id
 @Injectable()
@@ -28,23 +30,48 @@ export class PasswordService {
     this.KEY = Buffer.from(key, 'hex');
   }
 
-  async getAllPasswords(userId: string): Promise<GetPasswordDto[]> {
-    const passwordList = await this.prisma.password.findMany({
-      where: {
+  async getAllPasswords({
+    userId,
+    groupId,
+  }: GetPasswordsQueryDto): Promise<GetPasswordDto[]> {
+    let whereCondition: Prisma.PasswordWhereInput = {};
+    if (userId && !groupId) {
+      whereCondition = {
         ownerId: userId,
         groupShares: { none: {} }, // Exclude shared passwords
-      },
-      select: {
-        id: true,
-        serviceName: true,
-        url: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-    return plainToInstance(GetPasswordDto, passwordList, {
-      excludeExtraneousValues: true,
-    });
+      };
+    } else if (groupId && userId) {
+      const isInGroup = await this.prisma.isInGroup(userId, groupId);
+      if (!isInGroup) {
+        throw new UnauthorizedException();
+      }
+      whereCondition = {
+        groupShares: {
+          some: {
+            groupId: groupId,
+          },
+        },
+      };
+    }
+
+    try {
+      const passwordList = await this.prisma.password.findMany({
+        where: whereCondition,
+        select: {
+          id: true,
+          serviceName: true,
+          url: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+      return plainToInstance(GetPasswordDto, passwordList, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      console.error('Error retrieving passwords:', error);
+      throw new InternalServerErrorException('Failed to retrieve passwords');
+    }
   }
 
   async getPasswordById(
@@ -128,6 +155,11 @@ export class PasswordService {
     passwordId: string,
     updatePasswordDto: UpdatePasswordDto,
   ): Promise<GetPasswordDto> {
+    const isOwner = await this.prisma.isPasswordOwner(userId, passwordId);
+    if (!isOwner) {
+      throw new UnauthorizedException(`You are not the owner of this password`);
+    }
+
     try {
       let updateData: UpdatePasswordDto & { iv?: string };
 

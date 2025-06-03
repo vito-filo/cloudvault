@@ -6,6 +6,7 @@ import {
   Patch,
   Delete,
   Param,
+  Query,
 } from '@nestjs/common';
 import { PasswordService } from './password.service';
 import {
@@ -13,15 +14,16 @@ import {
   GetPasswordDto,
   GetPasswordDetailDto,
   UpdatePasswordDto,
+  GetPasswordsQueryDto,
 } from './dto';
 @Controller('password')
 export class PasswordController {
   constructor(private readonly passwordService: PasswordService) {}
 
-  // Get all passwords for a specific user
-  @Get(':id')
-  findAll(@Param('id') id: string): Promise<GetPasswordDto[]> {
-    return this.passwordService.getAllPasswords(id);
+  // Get all passwords for a specific user or group
+  @Get()
+  findAll(@Query() query: GetPasswordsQueryDto): Promise<GetPasswordDto[]> {
+    return this.passwordService.getAllPasswords(query);
   }
 
   // Get details of a specific user's password
