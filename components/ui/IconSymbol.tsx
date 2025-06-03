@@ -18,6 +18,8 @@ type IconSymbolName = keyof typeof MAPPING;
  * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
  */
 const MAPPING = {
+  "ellipsis.circle.fill": "settings",
+  "plus.square.fill.on.square.fill": "group-add",
   "person.3.fill": "group",
   "trash.fill": "delete",
   "plus.rectangle.fill": "create",

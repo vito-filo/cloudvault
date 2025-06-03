@@ -1,4 +1,5 @@
 import { ItemCell } from "@/components/ItemCell";
+import { IconSymbol } from "@/components/ui/IconSymbol";
 import { useUserData } from "@/context/authContext";
 import { useApi } from "@/hooks/useApi";
 import { listStyle } from "@/styles/list";
@@ -6,7 +7,14 @@ import { PasswordItemList } from "@/types/password";
 import * as LocalAuthentication from "expo-local-authentication";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, FlatList, Text } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+} from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 // This component fetches and displays a list of passwords for a specific group.
@@ -30,7 +38,7 @@ export default function GroupPasswordList() {
     setLoading(true);
     try {
       const response = await apiFetch<PasswordItemList[]>(
-        `/password/${userData.id}/group/${groupId}`,
+        `/password?userId=${userData.id}&groupId=${groupId}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -108,7 +116,35 @@ export default function GroupPasswordList() {
             onRefresh={fetchData}
           />
         )}
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => {
+            router.navigate({
+              pathname: "/createGroup",
+              params: {
+                groupIdParam: groupId,
+                groupNameParam: groupName,
+              },
+            });
+          }}
+        >
+          <IconSymbol size={28} name="ellipsis.circle.fill" color={"black"} />
+        </TouchableOpacity>
       </SafeAreaView>
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  addButton: {
+    position: "absolute",
+    bottom: 80,
+    right: 30,
+    width: 55,
+    height: 55,
+    backgroundColor: "#FF3F33",
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});

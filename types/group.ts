@@ -5,3 +5,8 @@ export type GroupList = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type GroupInput = {
+  name: string;
+  description?: string;
+};

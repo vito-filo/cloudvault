@@ -1,4 +1,5 @@
 import { ItemCell } from "@/components/ItemCell";
+import { IconSymbol } from "@/components/ui/IconSymbol";
 import { useUserData } from "@/context/authContext";
 import { useApi } from "@/hooks/useApi";
 import { listStyle } from "@/styles/list";
@@ -10,13 +11,15 @@ import {
   Alert,
   FlatList,
   SafeAreaView,
+  StyleSheet,
   Text,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 // This component fetches and displays a list of groups for the user.
 
-export default function GroupsPage() {
+export default function GroupsList() {
   const { apiFetch } = useApi();
   const [userData, token] = useUserData();
   const [data, setData] = useState<GroupList[]>([]);
@@ -83,7 +86,33 @@ export default function GroupsPage() {
             onRefresh={fetchData}
           />
         )}
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => {
+            router.navigate("/createGroup");
+          }}
+        >
+          <IconSymbol
+            size={28}
+            name="plus.square.fill.on.square.fill"
+            color={"black"}
+          />
+        </TouchableOpacity>
       </SafeAreaView>
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  addButton: {
+    position: "absolute",
+    bottom: 80,
+    right: 30,
+    width: 55,
+    height: 55,
+    backgroundColor: "#FF3F33",
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});

@@ -22,13 +22,21 @@ export function ItemCell({ item, apiEndpoint, handlePress }: ItemCellProps) {
 
   const deleteItem = async (itemId: string) => {
     try {
-      await apiFetch(`${apiEndpoint}/${item.id}`, {
+      const response = (await apiFetch(`${apiEndpoint}/${item.id}`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         method: "DELETE",
-      });
+      })) as Response;
+      console.log("Delete response:", response);
+      if (response?.ok) {
+        Alert.alert("Success", "Password deleted successfully.");
+        // Optionally, you can refresh the list or perform other actions here
+      } else {
+        const errorText = await response?.text();
+        Alert.alert("Error", `Failed to delete password: ${errorText}`);
+      }
     } catch (error) {
       Alert.alert("Error", "Failed to delete password.");
       console.error("Error deleting password:", error);

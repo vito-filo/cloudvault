@@ -50,7 +50,9 @@ export function useApi(): {
         ...(options.headers || {}),
       };
 
-      console.log("Sending request to:", `${BASE_URL}${endpoint}`);
+      console.log(
+        `Sending request ${options.method} to ${BASE_URL}${endpoint}`
+      );
       const response = await fetch(`${BASE_URL}${endpoint}`, {
         ...options,
         headers,
