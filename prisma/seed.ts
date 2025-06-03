@@ -26,7 +26,7 @@ async function main() {
   });
   const alice = await prisma.user.create({
     data: {
-      id: '588ba40d-08b1-4877-a769-4a83661009cb',
+      id: '8c537fed-aa7c-4d6b-8a36-1815dceb68b4',
       name: 'Alice',
       email: 'alice@example.com',
       provider: 'Cognito',
@@ -39,7 +39,7 @@ async function main() {
   let iv = generateIV();
   await prisma.password.create({
     data: {
-      id: 'd1e862f3c-d251-41ec-bd96-62d59e570a4c',
+      id: '7951f8f5-95b2-44d3-807b-d35080d2b13a',
       url: 'https://google.com',
       serviceName: 'Google',
       username: fartington.name,
@@ -54,7 +54,7 @@ async function main() {
   iv = generateIV();
   await prisma.password.create({
     data: {
-      id: 'e2e862f3c-d251-41ec-bd96-62d59e570a4c',
+      id: '05ba29e5-2d37-4f31-b1b1-9654737f89a0',
       url: 'https://facebook.com',
       serviceName: 'Facebook',
       username: fartington.name,
@@ -70,7 +70,7 @@ async function main() {
   iv = generateIV();
   await prisma.password.create({
     data: {
-      id: 'f3e862f3c-d251-41ec-bd96-62d59e570a4c',
+      id: '3d6eed35-3a60-4be5-a965-7478702f8c2f',
       url: 'https://twitter.com',
       serviceName: 'Twitter',
       username: alice.name,
@@ -86,7 +86,7 @@ async function main() {
   iv = generateIV();
   const netflixFamily = await prisma.password.create({
     data: {
-      id: 'g4e862f3c-d251-41ec-bd96-62d59e570a4c',
+      id: '0e8429ce-5811-4f2d-a357-fa9a2ab1e493',
       url: 'https://netflix.com',
       serviceName: 'Netflix',
       username: 'FamilyAccount',
@@ -101,7 +101,7 @@ async function main() {
   // Group Family for Fartington and Alice
   await prisma.group.create({
     data: {
-      id: 'h5e862f3c-d251-41ec-bd96-62d59e570a4c',
+      id: 'af1c66b2-af96-4bce-85fd-b11c40db511f',
       name: 'Family',
       description: 'Group for family members',
       createdBy: { connect: { id: fartington.id } },
