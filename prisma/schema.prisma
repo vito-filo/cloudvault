@@ -62,7 +62,7 @@ model GroupMember {
   isAdmin           Boolean   @default(false)
   joinedAt          DateTime  @default(now())
 
-  group             Group     @relation(fields: [groupId], references: [id])
+  group             Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
   user              User      @relation(fields: [userId], references: [id])
 
   @@id([groupId, userId])

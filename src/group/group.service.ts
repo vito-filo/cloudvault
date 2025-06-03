@@ -93,17 +93,34 @@ export class GroupService {
   }
 
   async deleteGroup(userId: string, groupId: string) {
+    // Check if the user is an admin of the group
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+      select: { members: { where: { userId: userId, isAdmin: true } } },
+    });
+
+    if (!group) {
+      throw new ForbiddenException('User is not an admin of this group');
+    }
+
+    // Check if group has passwords associated with it
+    const passwords = await this.prisma.password.findMany({
+      where: {
+        groupShares: {
+          some: {
+            groupId: groupId,
+          },
+        },
+      },
+    });
+
+    if (passwords.length > 0) {
+      throw new ForbiddenException(
+        'Cannot delete group with associated passwords',
+      );
+    }
+
     try {
-      // Check if the user is an admin of the group
-      const group = await this.prisma.group.findUnique({
-        where: { id: groupId },
-        select: { members: { where: { userId: userId, isAdmin: true } } },
-      });
-
-      if (!group) {
-        throw new ForbiddenException('User is not an admin of this group');
-      }
-
       // Delete the group
       await this.prisma.group.delete({
         where: { id: groupId },
