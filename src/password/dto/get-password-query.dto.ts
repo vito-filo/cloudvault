@@ -1,7 +1,8 @@
-import { IsUUID, IsOptional } from 'class-validator';
+import { IsUUID, IsOptional, IsNotEmpty } from 'class-validator';
 
 export class GetPasswordsQueryDto {
   @IsUUID()
+  @IsNotEmpty()
   userId: string;
 
   @IsUUID()

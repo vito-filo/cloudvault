@@ -1,6 +1,11 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateGroupDto, GetGroupDto, UpdateGroupDto } from './dto';
+import {
+  CreateGroupDto,
+  GetGroupDetailsQueryDto,
+  GetGroupDto,
+  UpdateGroupDto,
+} from './dto';
 import { plainToInstance } from 'class-transformer';
 
 @Injectable()
@@ -33,6 +38,28 @@ export class GroupService {
     } catch (error) {
       console.error('Error fetching groups:', error);
       throw new Error('Failed to fetch groups');
+    }
+  }
+
+  async getGroupDetails({
+    userId,
+    groupId,
+  }: GetGroupDetailsQueryDto): Promise<GetGroupDto> {
+    const isInGroup = await this.prisma.isInGroup(userId, groupId);
+    if (!isInGroup) {
+      throw new ForbiddenException();
+    }
+
+    try {
+      const response = await this.prisma.group.findUnique({
+        where: { id: groupId },
+      });
+      return plainToInstance(GetGroupDto, response, {
+        excludeExtraneousValues: true,
+      });
+    } catch (error) {
+      console.error('Error fetching group details:', error);
+      throw new Error('Failed to fetch group details');
     }
   }
 

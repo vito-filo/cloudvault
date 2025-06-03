@@ -7,8 +7,14 @@ import {
   Delete,
   Param,
   Patch,
+  Query,
 } from '@nestjs/common';
-import { CreateGroupDto, GetGroupDto, UpdateGroupDto } from './dto';
+import {
+  CreateGroupDto,
+  GetGroupDto,
+  UpdateGroupDto,
+  GetGroupDetailsQueryDto,
+} from './dto';
 
 @Controller('group')
 export class GroupController {
@@ -25,6 +31,13 @@ export class GroupController {
   @Get(':userId')
   getGroups(@Param('userId') userId: string): Promise<GetGroupDto[]> {
     return this.groupService.getAllGroups(userId);
+  }
+
+  @Get()
+  getGroupDetails(
+    @Query() query: GetGroupDetailsQueryDto,
+  ): Promise<GetGroupDto> {
+    return this.groupService.getGroupDetails(query);
   }
 
   @Delete(':userId/:groupId')
