@@ -18,12 +18,13 @@ export default function PasswordPage() {
     setLoading(true);
     try {
       const response = await apiFetch<PasswordItemList[]>(
-        `/password/${userData.id}`,
+        `/password?userId=${userData.id}`,
         {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
+          method: "GET",
         }
       );
       setData(response);
