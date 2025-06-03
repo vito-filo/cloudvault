@@ -1,7 +1,7 @@
 import { useUserData } from "@/context/authContext";
 import { useItemContext } from "@/context/ItemContext";
 import { useApi } from "@/hooks/useApi";
-import { InputPassword } from "@/types/password";
+import { PasswordInput } from "@/types/password";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Button, StyleSheet, TextInput } from "react-native";
@@ -52,7 +52,7 @@ export default function CreatePasswordPage() {
     if (!validateInput()) {
       return; // Stop submission if validation fails
     }
-    const inputData: InputPassword = {
+    const inputData: PasswordInput = {
       serviceName: serviceName,
       password: password,
       username: userName,

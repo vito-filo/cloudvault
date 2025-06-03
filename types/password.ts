@@ -1,6 +1,6 @@
 export type PasswordItemList = {
-  id: number;
-  serviceName: string | null;
+  id: string;
+  serviceName: string;
   url: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -16,7 +16,7 @@ export type PasswordInput = {
 };
 
 export type PasswordItemDetail = {
-  id: number;
+  id: string;
   serviceName: string;
   password: string;
   username?: string;

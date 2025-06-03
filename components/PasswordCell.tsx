@@ -27,7 +27,7 @@ export default function PasswordCell({ item }: { item: PasswordItemList }) {
   const [userData, token] = useUserData();
   const { apiFetch } = useApi();
 
-  const deletePassword = async (passwordId: number) => {
+  const deletePassword = async (passwordId: string) => {
     try {
       await apiFetch(`/password/${userData.id}/${item.id}`, {
         headers: {
