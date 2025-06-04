@@ -1,13 +1,16 @@
-import PasswordCell from "@/components/PasswordCell";
+import { ItemCell } from "@/components/ItemCell";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { useUserData } from "@/context/authContext";
 import { useApi } from "@/hooks/useApi";
 import { listStyle } from "@/styles/list";
 import { PasswordItemList } from "@/types/password";
+import { useFocusEffect } from "@react-navigation/native";
+import * as LocalAuthentication from "expo-local-authentication";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Text,
   TouchableOpacity,
@@ -45,9 +48,42 @@ export default function PasswordPage() {
     }
   }, [apiFetch, userData.id, token]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  // Refresh the list when the page comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
+
+  const handleBiometricAuth = async (): Promise<boolean> => {
+    // If device doesn't have biometric hardware biometrics are not enrolled, use passcode to authenticate.
+    const result = await LocalAuthentication.authenticateAsync({
+      promptMessage: "Authenticate to continue",
+      fallbackLabel: "Use Passcode", // Optional
+    });
+
+    if (result.success) {
+      return true;
+    } else {
+      Alert.alert("Authentication failed", result.error || "Try again");
+      return false;
+    }
+  };
+
+  const handlePress = async (item: PasswordItemList) => {
+    try {
+      const isAuth = await handleBiometricAuth();
+      if (isAuth) {
+        router.push({
+          pathname: "/passwordDetails/[id]",
+          params: { id: item.id, name: item.serviceName },
+        });
+      }
+    } catch (error) {
+      console.error("Error during password cell press:", error);
+      Alert.alert("Error", "Failed to get password details.");
+    }
+  };
 
   return (
     <SafeAreaProvider>
@@ -59,7 +95,14 @@ export default function PasswordPage() {
         ) : (
           <FlatList
             data={data}
-            renderItem={({ item }) => <PasswordCell item={item} />}
+            renderItem={({ item }) => (
+              <ItemCell
+                item={{ id: item.id, name: item.serviceName }}
+                apiEndpoint={`/password/${userData.id}`}
+                handlePress={() => handlePress(item)}
+                triggerRefresh={fetchData}
+              />
+            )}
             keyExtractor={(item) => item.id.toString()}
             // extraData={selectedId}
             refreshing={loading}

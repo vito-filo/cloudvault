@@ -4,8 +4,8 @@ import { useUserData } from "@/context/authContext";
 import { useApi } from "@/hooks/useApi";
 import { listStyle } from "@/styles/list";
 import { GroupList } from "@/types/group";
-import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -46,9 +46,11 @@ export default function GroupsList() {
     }
   }, [apiFetch, token, userData.id]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
 
   const handlePress = async (item: GroupList) => {
     try {
@@ -77,6 +79,7 @@ export default function GroupsList() {
                 item={{ id: item.id, name: item.name }}
                 apiEndpoint={`/group/${userData.id}`}
                 handlePress={() => handlePress(item)}
+                triggerRefresh={fetchData}
               />
             )}
             keyExtractor={(item) => item.id.toString()}

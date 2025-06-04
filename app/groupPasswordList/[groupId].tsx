@@ -5,7 +5,12 @@ import { useApi } from "@/hooks/useApi";
 import { listStyle } from "@/styles/list";
 import { PasswordItemList } from "@/types/password";
 import * as LocalAuthentication from "expo-local-authentication";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import {
+  useFocusEffect,
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
+} from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -61,8 +66,13 @@ export default function GroupPasswordList() {
       title: groupName || "Detail",
       headerBackTitle: "Back",
     });
-    fetchData();
-  }, [fetchData, groupName, navigation]);
+  }, [groupName, navigation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
 
   const handleBiometricAuth = async (): Promise<boolean> => {
     // If device doesn't have biometric hardware biometrics are not enrolled, use passcode to authenticate.
@@ -109,6 +119,7 @@ export default function GroupPasswordList() {
                 item={{ id: item.id, name: item.serviceName }}
                 apiEndpoint={`password/${userId}/${item.id}`}
                 handlePress={() => handlePress(item)}
+                triggerRefresh={fetchData}
               />
             )}
             keyExtractor={(item) => item.id.toString()}

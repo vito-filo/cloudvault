@@ -13,10 +13,16 @@ const logo = {
 type ItemCellProps = {
   item: { id: string; name: string };
   apiEndpoint: string;
+  triggerRefresh: () => void;
   handlePress?: (item: any) => void;
 };
 
-export function ItemCell({ item, apiEndpoint, handlePress }: ItemCellProps) {
+export function ItemCell({
+  item,
+  apiEndpoint,
+  handlePress,
+  triggerRefresh,
+}: ItemCellProps) {
   const [, token] = useUserData();
   const { apiFetch } = useApi();
 
@@ -29,6 +35,7 @@ export function ItemCell({ item, apiEndpoint, handlePress }: ItemCellProps) {
         },
         method: "DELETE",
       });
+      triggerRefresh();
     } catch (error) {
       Alert.alert("Error", "Failed to delete password.");
       console.error("Error deleting password:", error);
