@@ -3,8 +3,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateGroupDto,
   GetGroupDetailsQueryDto,
-  GetGroupDto,
   UpdateGroupDto,
+  GetGroupListDto,
+  GetGroupDetailsDto,
 } from './dto';
 import { plainToInstance } from 'class-transformer';
 
@@ -12,7 +13,7 @@ import { plainToInstance } from 'class-transformer';
 export class GroupService {
   constructor(private prisma: PrismaService) {}
 
-  async getAllGroups(userId: string): Promise<GetGroupDto[]> {
+  async getAllGroups(userId: string): Promise<GetGroupListDto[]> {
     try {
       const groups = await this.prisma.group.findMany({
         where: {
@@ -22,18 +23,19 @@ export class GroupService {
             },
           },
         },
-        include: {
-          members: {
-            select: {
-              userId: true,
-              isAdmin: true,
-            },
-          },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          createdAt: true,
+          updatedAt: true,
         },
       });
 
       return groups.map((group) =>
-        plainToInstance(GetGroupDto, group, { excludeExtraneousValues: true }),
+        plainToInstance(GetGroupListDto, group, {
+          excludeExtraneousValues: true,
+        }),
       );
     } catch (error) {
       console.error('Error fetching groups:', error);
@@ -44,7 +46,7 @@ export class GroupService {
   async getGroupDetails({
     userId,
     groupId,
-  }: GetGroupDetailsQueryDto): Promise<GetGroupDto> {
+  }: GetGroupDetailsQueryDto): Promise<GetGroupDetailsDto> {
     const isInGroup = await this.prisma.isInGroup(userId, groupId);
     if (!isInGroup) {
       throw new ForbiddenException();
@@ -53,8 +55,22 @@ export class GroupService {
     try {
       const response = await this.prisma.group.findUnique({
         where: { id: groupId },
+        include: {
+          members: {
+            select: {
+              user: {
+                select: {
+                  email: true,
+                  name: true,
+                },
+              },
+              isAdmin: true,
+            },
+          },
+        },
       });
-      return plainToInstance(GetGroupDto, response, {
+      console.log('Group details response:', response);
+      return plainToInstance(GetGroupDetailsDto, response, {
         excludeExtraneousValues: true,
       });
     } catch (error) {
@@ -88,10 +104,30 @@ export class GroupService {
   async createGroup(
     userId: string,
     createGroupDto: CreateGroupDto,
-  ): Promise<GetGroupDto> {
+  ): Promise<GetGroupListDto> {
     try {
-      const { name, description, userIds } = createGroupDto;
-      const users = [{ id: userId }, ...(userIds?.map((id) => ({ id })) || [])];
+      let users: Array<{ id: string }> = [];
+      // convert user emails to user IDs
+      if (
+        createGroupDto.membersEmail &&
+        createGroupDto.membersEmail.length !== 0
+      ) {
+        const userIds = await this.prisma.user.findMany({
+          where: {
+            AND: [
+              { email: { in: createGroupDto.membersEmail } },
+              { id: { not: userId } }, // Exclude the creator from the members
+            ],
+          },
+        });
+        users = [
+          { id: userId },
+          ...(userIds?.map((id) => ({ id: id.id })) || []),
+        ];
+      }
+
+      const { name, description } = createGroupDto;
+      // const users = [{ id: userId }, ...(userIds?.map((id) => ({ id })) || [])];
 
       const response = await this.prisma.group.create({
         data: {
@@ -107,7 +143,9 @@ export class GroupService {
         },
       });
 
-      return plainToInstance(GetGroupDto, response);
+      return plainToInstance(GetGroupListDto, response, {
+        excludeExtraneousValues: true,
+      });
     } catch (error) {
       console.error('Error creating group:', error);
       throw new Error('Failed to create group');
@@ -159,7 +197,7 @@ export class GroupService {
     updateGroupDto: UpdateGroupDto,
   ) {
     try {
-      const group = await this.prisma.group.update({
+      await this.prisma.group.update({
         where: {
           id: groupId,
           members: {
@@ -172,9 +210,7 @@ export class GroupService {
         data: updateGroupDto,
       });
 
-      return plainToInstance(GetGroupDto, group, {
-        excludeExtraneousValues: true,
-      });
+      return;
     } catch (error) {
       console.error('Error updating group:', error);
       throw new Error('Failed to update group');

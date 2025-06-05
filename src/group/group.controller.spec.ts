@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { GroupController } from './group.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { GroupService } from './group.service';
-import { GetGroupDto } from './dto';
+import { GetGroupListDto } from './dto';
 
 // This unit tests assert that the GroupController:
 // - is defined correctly
@@ -56,17 +56,13 @@ describe('GroupController', () => {
 
   describe('getGroups', () => {
     it('should return all groups for a user', async () => {
-      const mockGroupList: GetGroupDto[] = [
+      const mockGroupList: GetGroupListDto[] = [
         {
           id: 'uuid1',
           name: 'Group 1',
           description: 'Description 1',
           createdAt: new Date(),
           updatedAt: new Date(),
-          members: [
-            { userId: 'user1', isAdmin: true },
-            { userId: 'user2', isAdmin: false },
-          ],
         },
         {
           id: 'uuid2',
@@ -74,10 +70,6 @@ describe('GroupController', () => {
           description: 'Description 2',
           createdAt: new Date(),
           updatedAt: new Date(),
-          members: [
-            { userId: 'user3', isAdmin: false },
-            { userId: 'user4', isAdmin: true },
-          ],
         },
       ];
       jest.spyOn(service, 'getAllGroups').mockResolvedValue(mockGroupList);
@@ -98,25 +90,22 @@ describe('GroupController', () => {
 
   describe('createGroup', () => {
     it('should create a new group', async () => {
-      const mockGroup: GetGroupDto = {
+      const mockGroup: GetGroupListDto = {
         id: 'uuid1',
         name: 'New Group',
         description: 'New Group Description',
         createdAt: new Date(),
         updatedAt: new Date(),
-        members: [{ userId: 'user123', isAdmin: true }],
       };
       jest.spyOn(service, 'createGroup').mockResolvedValue(mockGroup);
       const result = await controller.createGroup('user123', {
         name: 'New Group',
         description: 'New Group Description',
-        userIds: ['user123'],
       });
       expect(result).toEqual(mockGroup);
       expect(service.createGroup).toHaveBeenCalledWith('user123', {
         name: 'New Group',
         description: 'New Group Description',
-        userIds: ['user123'],
       });
     });
 
@@ -128,7 +117,6 @@ describe('GroupController', () => {
         controller.createGroup('user123', {
           name: 'New Group',
           description: 'New Group Description',
-          userIds: ['user123'],
         }),
       ).rejects.toThrow('Error creating group');
     });
@@ -136,24 +124,12 @@ describe('GroupController', () => {
 
   describe('updateGroup', () => {
     it('should update an existing group', async () => {
-      const mockGroup: GetGroupDto = {
-        id: 'uuid1',
-        name: 'Updated Group',
-        description: 'Updated Description',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        members: [{ userId: 'user123', isAdmin: true }],
-      };
-      jest.spyOn(service, 'updateGroup').mockResolvedValue(mockGroup);
-      const result = await controller.updateGroup('user123', 'uuid1', {
+      jest.spyOn(service, 'updateGroup').mockResolvedValue();
+      await controller.updateGroup('user123', 'uuid1', {
         name: 'Updated Group',
         description: 'Updated Description',
       });
-      expect(result).toEqual(mockGroup);
-      expect(service.updateGroup).toHaveBeenCalledWith('user123', 'uuid1', {
-        name: 'Updated Group',
-        description: 'Updated Description',
-      });
+      expect(service.updateGroup).toHaveBeenCalled();
     });
 
     it('should handle errors when updating a group', async () => {

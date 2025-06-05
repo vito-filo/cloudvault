@@ -1,10 +1,4 @@
-import {
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsArray,
-  IsInt,
-} from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsArray } from 'class-validator';
 
 export class CreateGroupDto {
   @IsNotEmpty()
@@ -17,6 +11,6 @@ export class CreateGroupDto {
 
   @IsOptional()
   @IsArray()
-  @IsInt({ each: true })
-  userIds?: string[]; // Regular group members
+  @IsString({ each: true })
+  membersEmail?: string[]; // Regular group members by email
 }

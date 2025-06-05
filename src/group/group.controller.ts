@@ -11,9 +11,10 @@ import {
 } from '@nestjs/common';
 import {
   CreateGroupDto,
-  GetGroupDto,
   UpdateGroupDto,
   GetGroupDetailsQueryDto,
+  GetGroupListDto,
+  GetGroupDetailsDto,
 } from './dto';
 
 @Controller('group')
@@ -24,19 +25,21 @@ export class GroupController {
   createGroup(
     @Param('userId') userId: string,
     @Body() CreateGroupDto: CreateGroupDto,
-  ): Promise<GetGroupDto> {
+  ): Promise<GetGroupListDto> {
     return this.groupService.createGroup(userId, CreateGroupDto);
   }
 
+  // Get list of groups for a user
   @Get(':userId')
-  getGroups(@Param('userId') userId: string): Promise<GetGroupDto[]> {
+  getGroups(@Param('userId') userId: string): Promise<GetGroupListDto[]> {
     return this.groupService.getAllGroups(userId);
   }
 
+  // Get details of a specific group
   @Get()
   getGroupDetails(
     @Query() query: GetGroupDetailsQueryDto,
-  ): Promise<GetGroupDto> {
+  ): Promise<GetGroupDetailsDto> {
     return this.groupService.getGroupDetails(query);
   }
 
@@ -56,12 +59,13 @@ export class GroupController {
     return this.groupService.deleteGroup(userId, groupId);
   }
 
+  // Update group
   @Patch(':userId/:groupId')
   updateGroup(
     @Param('userId') userId: string,
     @Param('groupId') groupId: string,
     @Body() updateGroupDto: UpdateGroupDto,
-  ): Promise<GetGroupDto> {
+  ): Promise<void> {
     return this.groupService.updateGroup(userId, groupId, updateGroupDto);
   }
 }
