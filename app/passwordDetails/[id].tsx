@@ -1,6 +1,8 @@
+import { IconSymbol } from "@/components/ui/IconSymbol";
 import { useUserData } from "@/context/authContext";
 import { useApi } from "@/hooks/useApi";
 import { PasswordInput, PasswordUpdate } from "@/types/password";
+import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useReducer, useState } from "react";
 import {
@@ -9,6 +11,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -101,6 +104,41 @@ export default function PasswordDetail() {
     }
   }
 
+  async function copyToClipboard(text: string) {
+    await Clipboard.setStringAsync(text);
+    console.log("Copied to clipboard:", text);
+  }
+
+  const _copyableInput = (key: keyof PasswordInput) => {
+    const dataValue = data ? data[key] || "" : "";
+    return (
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.clipdoardInput}
+          defaultValue={dataValue}
+          onChangeText={(text) =>
+            setUpdatedData({
+              key: key,
+              value: text,
+              default: dataValue,
+            })
+          }
+        />
+        <TouchableOpacity
+          style={styles.copyButton}
+          onPress={() => copyToClipboard(updatedData.password || dataValue)}
+        >
+          <IconSymbol
+            style={styles.copyButton}
+            // size={10}
+            name="doc.on.clipboard.fill"
+            color={"black"}
+          />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   return (
     <>
       {data && !loading ? (
@@ -120,39 +158,13 @@ export default function PasswordDetail() {
           />
 
           <Text style={{ fontWeight: "bold" }}>Password:</Text>
-          <TextInput
-            style={styles.input}
-            defaultValue={data.password}
-            onChangeText={(text) =>
-              setUpdatedData({
-                key: "password",
-                value: text,
-                default: data.password,
-              })
-            }
-          />
+          {_copyableInput("password")}
 
           <Text style={{ fontWeight: "bold" }}>Username:</Text>
-          <TextInput
-            style={styles.input}
-            defaultValue={data.username}
-            onChangeText={(text) =>
-              setUpdatedData({
-                key: "username",
-                value: text,
-                default: data.username,
-              })
-            }
-          />
+          {_copyableInput("username")}
 
           <Text style={{ fontWeight: "bold" }}>Email:</Text>
-          <TextInput
-            style={styles.input}
-            defaultValue={data.email}
-            onChangeText={(text) =>
-              setUpdatedData({ key: "email", value: text, default: data.email })
-            }
-          />
+          {_copyableInput("email")}
 
           <Text style={{ fontWeight: "bold" }}>URL:</Text>
           <TextInput
@@ -191,12 +203,33 @@ export default function PasswordDetail() {
 }
 
 const styles = StyleSheet.create({
+  inputContainer: {
+    height: 50,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 7,
+  },
+  clipdoardInput: {
+    height: 50,
+    width: "85%",
+    paddingHorizontal: 20,
+    borderColor: "black",
+    // borderWidth: 1,
+    borderRadius: 7,
+  },
   input: {
     height: 50,
     paddingHorizontal: 20,
     borderColor: "black",
     borderWidth: 1,
     borderRadius: 7,
+  },
+  copyButton: {
+    flex: 1,
+    width: "80%",
+    height: "80%",
   },
   button: {
     backgroundColor: "red",
