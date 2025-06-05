@@ -63,6 +63,28 @@ export class GroupService {
     }
   }
 
+  async searchUserByName(
+    name: string,
+  ): Promise<{ name: string | null; email: string }[]> {
+    // TODO make the username mandatory in the DB schema
+    try {
+      const users = await this.prisma.user.findMany({
+        where: {
+          OR: [{ email: { contains: name } }, { name: { contains: name } }],
+        },
+        select: {
+          email: true,
+          name: true,
+        },
+      });
+
+      return users;
+    } catch (error) {
+      console.error('Error searching users:', error);
+      throw new Error('Failed to search users');
+    }
+  }
+
   async createGroup(
     userId: string,
     createGroupDto: CreateGroupDto,

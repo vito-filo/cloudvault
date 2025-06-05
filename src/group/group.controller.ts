@@ -40,6 +40,14 @@ export class GroupController {
     return this.groupService.getGroupDetails(query);
   }
 
+  // Search user by name/email
+  @Get('user/search/')
+  searchUser(
+    @Query('name') name: string,
+  ): Promise<{ name: string | null; email: string }[]> {
+    return this.groupService.searchUserByName(name);
+  }
+
   @Delete(':userId/:groupId')
   deleteGroup(
     @Param('userId') userId: string,
