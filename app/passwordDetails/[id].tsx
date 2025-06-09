@@ -1,9 +1,10 @@
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { useUserData } from "@/context/authContext";
+import { useItemContext } from "@/context/ItemContext";
 import { useApi } from "@/hooks/useApi";
 import { PasswordInput, PasswordUpdate } from "@/types/password";
 import * as Clipboard from "expo-clipboard";
-import { useLocalSearchParams, useNavigation } from "expo-router";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useReducer, useState } from "react";
 import {
   Alert,
@@ -34,8 +35,9 @@ export default function PasswordDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userData, token] = useUserData();
-
+  const { setItemListRefresh } = useItemContext();
   const [updatedData, setUpdatedData] = useReducer(reducer, {});
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -94,6 +96,8 @@ export default function PasswordDetail() {
           url: updatedData.url || data?.url || "",
           description: updatedData.description || data?.description || "",
         });
+        setItemListRefresh(true);
+        router.back();
       } else {
         Alert.alert("Error", "Failed to update password details.");
       }

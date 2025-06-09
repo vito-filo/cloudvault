@@ -1,4 +1,5 @@
 import { useUserData } from "@/context/authContext";
+import { useItemContext } from "@/context/ItemContext";
 import { useApi } from "@/hooks/useApi";
 import { formStyle } from "@/styles/createForm";
 import { PasswordInput } from "@/types/password";
@@ -24,6 +25,7 @@ export default function CreatePassword() {
     serviceName: "",
     password: "",
   });
+  const { setItemListRefresh } = useItemContext();
 
   useEffect(() => {
     navigation.setOptions({
@@ -68,7 +70,7 @@ export default function CreatePassword() {
         },
         body: JSON.stringify(data),
       });
-
+      setItemListRefresh(true);
       router.back();
     } catch (error) {
       console.error("Error submitting password:", error);

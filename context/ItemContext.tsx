@@ -2,17 +2,27 @@
 import React, { createContext, useContext, useState } from "react";
 
 type ItemContextType = {
-  shouldRefresh: boolean;
-  setShouldRefresh: (value: boolean) => void;
+  itemListRefresh: boolean;
+  setItemListRefresh: (value: boolean) => void;
+  gorupListRefresh: boolean;
+  setGroupListRefresh: (value: boolean) => void;
 };
 
 const ItemContext = createContext<ItemContextType | undefined>(undefined);
 
 export const ItemProvider = ({ children }: { children: React.ReactNode }) => {
-  const [shouldRefresh, setShouldRefresh] = useState(false);
+  const [itemListRefresh, setItemListRefresh] = useState(true);
+  const [gorupListRefresh, setGroupListRefresh] = useState(true);
 
   return (
-    <ItemContext.Provider value={{ shouldRefresh, setShouldRefresh }}>
+    <ItemContext.Provider
+      value={{
+        itemListRefresh,
+        setItemListRefresh,
+        gorupListRefresh,
+        setGroupListRefresh,
+      }}
+    >
       {children}
     </ItemContext.Provider>
   );

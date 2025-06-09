@@ -1,13 +1,13 @@
 import { ItemCell } from "@/components/ItemCell";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { useUserData } from "@/context/authContext";
+import { useItemContext } from "@/context/ItemContext";
 import { useApi } from "@/hooks/useApi";
 import { listStyle } from "@/styles/list";
 import { PasswordItemList } from "@/types/password";
-import { useFocusEffect } from "@react-navigation/native";
 import * as LocalAuthentication from "expo-local-authentication";
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -21,6 +21,7 @@ export default function PasswordPage() {
   const [data, setData] = useState<PasswordItemList[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { itemListRefresh, setItemListRefresh } = useItemContext();
   const [userData, token] = useUserData();
   const { apiFetch } = useApi();
   const router = useRouter();
@@ -48,12 +49,12 @@ export default function PasswordPage() {
     }
   }, [apiFetch, userData.id, token]);
 
-  // Refresh the list when the page comes into focus
-  useFocusEffect(
-    useCallback(() => {
+  useEffect(() => {
+    if (itemListRefresh) {
       fetchData();
-    }, [fetchData])
-  );
+      setItemListRefresh(false);
+    }
+  }, [fetchData, itemListRefresh, setItemListRefresh]);
 
   const handleBiometricAuth = async (): Promise<boolean> => {
     // If device doesn't have biometric hardware biometrics are not enrolled, use passcode to authenticate.
@@ -100,7 +101,7 @@ export default function PasswordPage() {
                 item={{ id: item.id, name: item.serviceName }}
                 apiEndpoint={`/password/${userData.id}`}
                 handlePress={() => handlePress(item)}
-                triggerRefresh={fetchData}
+                triggerRefresh={() => setItemListRefresh(true)}
               />
             )}
             keyExtractor={(item) => item.id.toString()}
