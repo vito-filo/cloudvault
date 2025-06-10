@@ -8,6 +8,7 @@ import {
   GetGroupDetailsDto,
 } from './dto';
 import { plainToInstance } from 'class-transformer';
+import { PrismaPromise } from '@prisma/client';
 
 @Injectable()
 export class GroupService {
@@ -106,24 +107,17 @@ export class GroupService {
     createGroupDto: CreateGroupDto,
   ): Promise<GetGroupListDto> {
     try {
-      let users: Array<{ id: string }> = [];
-      // convert user emails to user IDs
+      const users: Array<{ id: string }> = [{ id: userId }];
       if (
         createGroupDto.membersEmail &&
         createGroupDto.membersEmail.length !== 0
       ) {
-        const userIds = await this.prisma.user.findMany({
-          where: {
-            AND: [
-              { email: { in: createGroupDto.membersEmail } },
-              { id: { not: userId } }, // Exclude the creator from the members
-            ],
-          },
-        });
-        users = [
-          { id: userId },
-          ...(userIds?.map((id) => ({ id: id.id })) || []),
-        ];
+        // convert user emails to user IDs
+        const membersIds = await this.findIds(
+          createGroupDto.membersEmail,
+          userId,
+        );
+        users.push(...membersIds);
       }
 
       const { name, description } = createGroupDto;
@@ -196,24 +190,115 @@ export class GroupService {
     groupId: string,
     updateGroupDto: UpdateGroupDto,
   ) {
-    try {
-      await this.prisma.group.update({
-        where: {
-          id: groupId,
+    const transactionList: PrismaPromise<any>[] = [];
+
+    // Update group details
+    transactionList.push(
+      this.prisma.group.update({
+        where: { id: groupId },
+        data: {
+          name: updateGroupDto.name,
+          description: updateGroupDto.description,
+        },
+      }),
+    );
+
+    // Get the current members of the group
+    if (updateGroupDto.membersEmail) {
+      const members = await this.prisma.group.findMany({
+        where: { id: groupId },
+        select: {
           members: {
-            some: {
-              userId: userId,
-              isAdmin: true,
+            select: {
+              userId: true,
             },
           },
         },
-        data: updateGroupDto,
       });
+      const currentMembers = members[0]?.members; // Assuming only one group (groupId) is returned
+      const updateMembers = await this.findIds(
+        updateGroupDto.membersEmail,
+        userId,
+      );
 
-      return;
+      // Check for members to add to the group
+      const connectMembers = updateMembers
+        .map((value) => {
+          if (!currentMembers.some((member) => member.userId === value.id)) {
+            return value.id;
+          }
+        })
+        .filter((userId) => userId !== undefined);
+      if (connectMembers.length !== 0) {
+        connectMembers.forEach((userId) => {
+          transactionList.push(
+            this.prisma.groupMember.upsert({
+              where: {
+                groupId_userId: {
+                  groupId: groupId,
+                  userId: userId,
+                },
+              },
+              create: {
+                groupId: groupId,
+                userId: userId,
+                isAdmin: false,
+              },
+              update: {},
+            }),
+          );
+        });
+      }
+
+      // Check for members to remove from the group
+      const disconnectMembers = currentMembers
+        .map((value) => {
+          if (
+            !updateMembers.some((member) => member.id === value.userId) &&
+            value.userId !== userId
+          ) {
+            return value.userId;
+          }
+        })
+        .filter((userId) => userId !== undefined);
+
+      if (disconnectMembers.length !== 0) {
+        transactionList.push(
+          this.prisma.groupMember.deleteMany({
+            where: {
+              groupId,
+              userId: {
+                in: disconnectMembers,
+              },
+            },
+          }),
+        );
+      }
+    }
+    try {
+      const result = await this.prisma.$transaction(transactionList);
+      return plainToInstance(GetGroupListDto, result[0], {
+        excludeExtraneousValues: true,
+      });
     } catch (error) {
       console.error('Error updating group:', error);
       throw new Error('Failed to update group');
     }
+  }
+
+  private async findIds(membersEmail: string[] | undefined, userId: string) {
+    // convert user emails to user IDs
+    if (!membersEmail || membersEmail.length === 0) {
+      return [];
+    }
+    const userIds = await this.prisma.user.findMany({
+      where: {
+        AND: [
+          { email: { in: membersEmail } },
+          { id: { not: userId } }, // Exclude the creator from the members
+        ],
+      },
+    });
+    return userIds.map((u) => ({ id: u.id }));
   }
 }

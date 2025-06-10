@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   CreateGroupDto,
@@ -16,6 +17,7 @@ import {
   GetGroupListDto,
   GetGroupDetailsDto,
 } from './dto';
+import { IsAdminOfGroupGuard } from 'src/common/guards/is-admin.guard';
 
 @Controller('group')
 export class GroupController {
@@ -61,11 +63,12 @@ export class GroupController {
 
   // Update group
   @Patch(':userId/:groupId')
+  @UseGuards(IsAdminOfGroupGuard)
   updateGroup(
     @Param('userId') userId: string,
     @Param('groupId') groupId: string,
     @Body() updateGroupDto: UpdateGroupDto,
-  ): Promise<void> {
+  ): Promise<GetGroupListDto> {
     return this.groupService.updateGroup(userId, groupId, updateGroupDto);
   }
 }

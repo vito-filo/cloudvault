@@ -56,4 +56,24 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       throw new Error('Failed to check password ownership');
     }
   }
+
+  async isAdminOfGroup(userId: string, groupId: string): Promise<boolean> {
+    // Check if the user is an admin of a specific group
+    try {
+      const group = await this.group.findFirst({
+        where: {
+          AND: [
+            { id: groupId },
+            { members: { some: { userId: userId, isAdmin: true } } },
+          ],
+        },
+        select: { id: true },
+      });
+
+      return !!group;
+    } catch (error) {
+      console.error('Error checking group admin status:', error);
+      throw new Error('Failed to check group admin status');
+    }
+  }
 }
