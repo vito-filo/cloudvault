@@ -1,11 +1,12 @@
 import { ItemCell } from "@/components/ItemCell";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { useUserData } from "@/context/authContext";
+import { useItemContext } from "@/context/ItemContext";
 import { useApi } from "@/hooks/useApi";
 import { listStyle } from "@/styles/list";
 import { GroupList } from "@/types/group";
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -25,11 +26,13 @@ export default function GroupsList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { gorupListRefresh, setGroupListRefresh } = useItemContext();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const response = await apiFetch<GroupList[]>(`/group/${userData.id}`, {
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -46,11 +49,12 @@ export default function GroupsList() {
     }
   }, [apiFetch, token, userData.id]);
 
-  useFocusEffect(
-    useCallback(() => {
+  useEffect(() => {
+    if (gorupListRefresh) {
       fetchData();
-    }, [fetchData])
-  );
+      setGroupListRefresh(false);
+    }
+  }, [fetchData, gorupListRefresh, setGroupListRefresh]);
 
   const handlePress = async (item: GroupList) => {
     try {
@@ -79,7 +83,7 @@ export default function GroupsList() {
                 item={{ id: item.id, name: item.name }}
                 apiEndpoint={`/group/${userData.id}`}
                 handlePress={() => handlePress(item)}
-                triggerRefresh={fetchData}
+                triggerRefresh={() => setGroupListRefresh(true)}
               />
             )}
             keyExtractor={(item) => item.id.toString()}

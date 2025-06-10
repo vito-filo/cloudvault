@@ -1,4 +1,5 @@
 import { useUserData } from "@/context/authContext";
+import { useItemContext } from "@/context/ItemContext";
 import { useApi } from "@/hooks/useApi";
 import { formStyle } from "@/styles/createForm";
 import { GroupDetails, GroupInput } from "@/types/group";
@@ -35,6 +36,7 @@ export default function PasswordDetail() {
   );
   const [searchData, setSearchData] = useState<UserData[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const { setGroupListRefresh } = useItemContext();
 
   async function handleSearch(searchParam: string) {
     try {
@@ -109,7 +111,7 @@ export default function PasswordDetail() {
     }
   }, [fetchData, groupIdParam, groupNameParam, navigation]);
 
-  async function handlePress() {
+  async function handleCreate() {
     if (!groupName) {
       Alert.alert("Error", "Group name required.");
       return;
@@ -122,7 +124,7 @@ export default function PasswordDetail() {
     };
 
     const method = groupIdParam ? "PATCH" : "POST";
-    const actionName = groupIdParam ? "updated" : "created";
+    const actionName = groupIdParam ? "update" : "create";
     const endpoint = groupIdParam
       ? `/group/${userData.id}/${groupIdParam}`
       : `/group/${userData.id}`;
@@ -139,6 +141,7 @@ export default function PasswordDetail() {
 
       if (response) {
         Alert.alert("Success", `Group ${actionName} successfully.`);
+        setGroupListRefresh(true);
         navigation.goBack();
       } else {
         Alert.alert("Error", `Group ${actionName} failed.`);
@@ -196,7 +199,7 @@ export default function PasswordDetail() {
         selectedStyle={styles.selectedStyle}
       />
 
-      <Pressable style={formStyle.button} onPress={handlePress}>
+      <Pressable style={formStyle.button} onPress={handleCreate}>
         <Text style={formStyle.buttonText}>
           {groupIdParam ? "UPDATE" : "CREATE"}
         </Text>
