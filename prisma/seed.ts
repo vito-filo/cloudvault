@@ -34,6 +34,35 @@ async function main() {
       userConfirmed: true,
     },
   });
+  const bob = await prisma.user.create({
+    data: {
+      id: 'c3c8d716-225b-499b-bd16-582036a2942e',
+      name: 'Bob',
+      email: 'bob@example.com',
+      provider: 'Cognito',
+      providerId: '123456789',
+      userConfirmed: true,
+    },
+  });
+  const charlie = await prisma.user.create({
+    data: {
+      id: '34707e24-c31a-4060-b9b2-b75814855e61',
+      name: 'Charlie',
+      email: 'charlie@example.com',
+      provider: 'Cognito',
+      providerId: '123456790',
+      userConfirmed: true,
+    },
+  });
+  const dave = await prisma.user.create({
+    data: {
+      id: '01b60717-8251-4968-ade1-10bc1ccc6874',
+      name: 'Dave',
+      email: 'dave@example.com',
+      provider: 'Cognito',
+      providerId: '123456791',
+    },
+  });
 
   // Google passowrd for Fartington
   let iv = generateIV();
@@ -109,6 +138,7 @@ async function main() {
         create: [
           { user: { connect: { id: fartington.id } }, isAdmin: true },
           { user: { connect: { id: alice.id } }, isAdmin: false },
+          { user: { connect: { id: bob.id } }, isAdmin: false },
         ],
       },
       sharedPasswords: {
