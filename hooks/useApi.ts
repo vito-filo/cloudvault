@@ -1,13 +1,12 @@
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
-import { Platform } from "react-native";
 import { useStorageState } from "./useStorageState";
 
-// TODO load from environment variables or config file
-let BASE_URL = "http://localhost:3000";
-if (Platform.OS === "android") {
-  BASE_URL = "http://10.0.2.2:3000";
-}
+let BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+// let BASE_URL = "http://localhost:3000";
+// if (Platform.OS === "android") {
+//   BASE_URL = "http://10.0.2.2:3000";
+// }
 
 export function useApi(): {
   apiFetch: <T>(endpoint: string, options?: RequestInit) => Promise<T>;
