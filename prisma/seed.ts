@@ -44,7 +44,7 @@ async function main() {
       userConfirmed: true,
     },
   });
-  const charlie = await prisma.user.create({
+  await prisma.user.create({
     data: {
       id: '34707e24-c31a-4060-b9b2-b75814855e61',
       name: 'Charlie',
@@ -54,7 +54,7 @@ async function main() {
       userConfirmed: true,
     },
   });
-  const dave = await prisma.user.create({
+  await prisma.user.create({
     data: {
       id: '01b60717-8251-4968-ade1-10bc1ccc6874',
       name: 'Dave',
@@ -91,6 +91,118 @@ async function main() {
       password: encrypt('AnotherPassword456!', key, iv),
       iv: iv.toString('hex'),
       description: 'My Facebook account',
+      owner: { connect: { id: fartington.id } },
+    },
+  });
+
+  // GitHub password for Fartington
+  iv = generateIV();
+  await prisma.password.create({
+    data: {
+      id: '1b71e8b8-4a19-472c-a315-a1f6be24a094',
+      url: 'https://github.com',
+      serviceName: 'GitHub',
+      username: fartington.name,
+      email: fartington.email,
+      password: encrypt('FartingtonGitHubPass!', key, iv),
+      iv: iv.toString('hex'),
+      description: 'My GitHub account',
+      owner: { connect: { id: fartington.id } },
+    },
+  });
+
+  // Twitter password for Fartington
+  iv = generateIV();
+  await prisma.password.create({
+    data: {
+      id: '1c69c175-d4e2-42b6-bc05-a318e2505f21',
+      url: 'https://twitter.com',
+      serviceName: 'Twitter',
+      username: fartington.name,
+      email: fartington.email,
+      password: encrypt('FartingtonTwitterPass!', key, iv),
+      iv: iv.toString('hex'),
+      description: 'My Twitter account',
+      owner: { connect: { id: fartington.id } },
+    },
+  });
+
+  // OpenAI password for Fartington
+  iv = generateIV();
+  await prisma.password.create({
+    data: {
+      id: 'dab0b865-938b-4cfa-8a68-a4b15bdb3763',
+      url: 'https://openai.com',
+      serviceName: 'OpenAI',
+      username: fartington.name,
+      email: fartington.email,
+      password: encrypt('FartingtonOpenAIPass!', key, iv),
+      iv: iv.toString('hex'),
+      description: 'My OpenAI account',
+      owner: { connect: { id: fartington.id } },
+    },
+  });
+
+  // Microsoft password for Fartington
+  iv = generateIV();
+  await prisma.password.create({
+    data: {
+      id: 'dcfbde84-ca6c-45f3-a391-2c7181c86ea5',
+      url: 'https://microsoft.com',
+      serviceName: 'Microsoft',
+      username: fartington.name,
+      email: fartington.email,
+      password: encrypt('FartingtonMicrosoftPass!', key, iv),
+      iv: iv.toString('hex'),
+      description: 'My Microsoft account',
+      owner: { connect: { id: fartington.id } },
+    },
+  });
+
+  // Apple password for Fartington
+  iv = generateIV();
+  await prisma.password.create({
+    data: {
+      id: '6a8620dc-e151-4521-8881-c11e85e5e47a',
+      url: 'https://apple.com',
+      serviceName: 'Apple',
+      username: fartington.name,
+      email: fartington.email,
+      password: encrypt('FartingtonApplePass!', key, iv),
+      iv: iv.toString('hex'),
+      description: 'My Apple account',
+      owner: { connect: { id: fartington.id } },
+    },
+  });
+
+  // Amazon password for Fartington
+  iv = generateIV();
+  await prisma.password.create({
+    data: {
+      id: '0a6c8cae-7c20-409f-aa68-3c58eadefc3d',
+      url: 'https://amazon.com',
+      serviceName: 'Amazon',
+      username: fartington.name,
+      email: fartington.email,
+      password: encrypt('FartingtonAmazonPass!', key, iv),
+      iv: iv.toString('hex'),
+      description: 'My Amazon account',
+      owner: { connect: { id: fartington.id } },
+    },
+  });
+
+  // YouTube password for Fartington
+  iv = generateIV();
+  await prisma.password.create({
+    data: {
+      id: 'aa1fd964-50d9-4b90-b189-de264cf67c44',
+      url: 'https://youtube.com',
+      serviceName: 'YouTube',
+      username: fartington.name,
+      email: fartington.email,
+      password: encrypt('FartingtonYouTubePass!', key, iv),
+      iv: iv.toString('hex'),
+      description: 'My YouTube account',
       owner: { connect: { id: fartington.id } },
     },
   });
