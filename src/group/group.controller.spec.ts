@@ -5,6 +5,7 @@ import { GroupController } from './group.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { GroupService } from './group.service';
 import { GetGroupListDto } from './dto';
+import { IsAdminOfGroupGuard } from '../common/guards/is-admin.guard';
 
 // This unit tests assert that the GroupController:
 // - is defined correctly
@@ -19,7 +20,7 @@ describe('GroupController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [PrismaModule],
       controllers: [GroupController],
-      providers: [GroupService],
+      providers: [GroupService, IsAdminOfGroupGuard],
     }).compile();
 
     controller = module.get<GroupController>(GroupController);
@@ -36,6 +37,7 @@ describe('GroupController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [PrismaModule],
       controllers: [GroupController],
       providers: [
         {
@@ -47,6 +49,7 @@ describe('GroupController', () => {
             deleteGroup: jest.fn(() => {}),
           },
         },
+        IsAdminOfGroupGuard,
       ],
     }).compile();
 
@@ -124,7 +127,15 @@ describe('GroupController', () => {
 
   describe('updateGroup', () => {
     it('should update an existing group', async () => {
-      jest.spyOn(service, 'updateGroup').mockResolvedValue();
+      const mockGroup: GetGroupListDto = {
+        id: 'uuid1',
+        name: 'Updated Group',
+        description: 'Updated Description',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      jest.spyOn(service, 'updateGroup').mockResolvedValue(mockGroup);
       await controller.updateGroup('user123', 'uuid1', {
         name: 'Updated Group',
         description: 'Updated Description',

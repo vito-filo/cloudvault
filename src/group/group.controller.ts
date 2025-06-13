@@ -17,7 +17,7 @@ import {
   GetGroupListDto,
   GetGroupDetailsDto,
 } from './dto';
-import { IsAdminOfGroupGuard } from 'src/common/guards/is-admin.guard';
+import { IsAdminOfGroupGuard } from '../common/guards/is-admin.guard';
 
 @Controller('group')
 export class GroupController {
