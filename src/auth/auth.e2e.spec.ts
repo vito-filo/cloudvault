@@ -5,10 +5,33 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { AppModule } from '../app.module';
 import { AuthService } from './auth.service';
 import { Server } from 'http';
+import {
+  PublicKeyCredentialCreationOptionsJSON,
+  RegistrationResponseJSON,
+} from '@simplewebauthn/server';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import {
+  AttestationFormat,
+  VerifiedRegistrationResponse,
+} from '@simplewebauthn/server';
+import * as webauthn from '@simplewebauthn/server';
 
 // This unit tests assert that the AuthController:
 // - Validate correct input DTOs
 // - Valitation fails with appropriate message when called with wrong input DTOs
+// - Generates valid WebAuthn registration options
+// - Verifies WebAuthn registration responses correctly
+
+// This tells Jest to mock the module BUT retain the real implementation
+jest.mock('@simplewebauthn/server', () => {
+  // Get the actual module (for all unmocked exports)
+  const actual: typeof webauthn = jest.requireActual('@simplewebauthn/server');
+  return {
+    ...actual,
+    verifyRegistrationResponse: jest.fn(), // <-- override only this
+  };
+});
 
 interface ValidationErrorResponse {
   error: string;
@@ -188,6 +211,229 @@ describe('Auth', () => {
           });
       },
     );
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+});
+
+describe('Webauthn', () => {
+  let app: INestApplication;
+  let httpServer: import('http').Server;
+  let authService: AuthService;
+  let cacheManager: Cache;
+
+  const CHALLENGE = 'bBUO4KrQm0JWURfcSsqj_saQgUNqFeFtj9soQNyPfgA';
+  const ORIGIN = 'http://localhost:8000';
+  const RP_NAME = 'Cloud-Vault';
+  const RP_ID = 'localhost';
+
+  const options: PublicKeyCredentialCreationOptionsJSON = {
+    challenge: CHALLENGE,
+    rp: {
+      name: RP_NAME,
+      id: ORIGIN,
+    },
+    user: {
+      id: 'CXuw0KOpaH6JhkwQ_aEo25ZnffvJk9ZwvrypOgts80k',
+      name: 'exampleUser',
+      displayName: '',
+    },
+    pubKeyCredParams: [
+      {
+        alg: -8,
+        type: 'public-key',
+      },
+      {
+        alg: -7,
+        type: 'public-key',
+      },
+      {
+        alg: -257,
+        type: 'public-key',
+      },
+    ],
+    timeout: 60000,
+    attestation: 'none',
+    excludeCredentials: [],
+    authenticatorSelection: {
+      residentKey: 'discouraged',
+      userVerification: 'preferred',
+      requireResidentKey: false,
+    },
+    extensions: {
+      credProps: true,
+    },
+    hints: [],
+  };
+
+  beforeAll(async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleRef.createNestApplication();
+    httpServer = app.getHttpServer() as unknown as Server;
+    app.useGlobalPipes(new ValidationPipe());
+
+    cacheManager = app.get<Cache>(CACHE_MANAGER);
+    authService = moduleRef.get<AuthService>(AuthService);
+
+    await app.init();
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('GET /webauthn/generate-registration-options', () => {
+    it('should generate valid registration options', async () => {
+      const options = await request(httpServer).get(
+        '/auth/webauthn/generate-registration-options?email=example@email.com&userName=exampleUser',
+      );
+
+      expect(options).toBeDefined();
+      expect(options.status).toBe(200);
+
+      const optionsJSON =
+        options.body as PublicKeyCredentialCreationOptionsJSON;
+
+      expect(optionsJSON).toHaveProperty('challenge');
+      expect(optionsJSON).toHaveProperty('user');
+      expect(optionsJSON).toHaveProperty('pubKeyCredParams');
+      expect(optionsJSON).toHaveProperty('rp');
+      expect(optionsJSON.rp).toHaveProperty('id');
+      expect(optionsJSON.rp).toHaveProperty('name');
+      expect(optionsJSON.rp.name).toBe('Cloud-Vault');
+    });
+  });
+
+  describe('POST /webauthn/verify-registration-response', () => {
+    it('should verify a valid registration response', async () => {
+      // Mock the registration request from the client
+      // This happens in client side, on navigator.credentials.create
+      const mockedCreationResponse: RegistrationResponseJSON = {
+        id: '1UJd7QWcBYXxvc7pnvGNY05L8rARZWhM7Z6achZ8f4w',
+        rawId: '1UJd7QWcBYXxvc7pnvGNY05L8rARZWhM7Z6achZ8f4w',
+        response: {
+          clientDataJSON: Buffer.from(
+            JSON.stringify({
+              type: 'webauthn.create',
+              challenge: CHALLENGE,
+              origin: ORIGIN,
+              crossOrigin: false,
+            }),
+          ).toString('base64'),
+          attestationObject:
+            'o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YViBSZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2NBAAAAAQECAwQFBgcIAQIDBAUGBwgAINVCXe0FnAWF8b3O6Z7xjWNOS_KwEWVoTO2emnIWfH-MpAEBAycgBiFYIO6x-F5TynpTDxBjAD0Aq_f2--K4zb5LpU2xBw3HhDVU',
+
+          transports: ['internal'],
+          publicKeyAlgorithm: -7,
+          publicKey:
+            'MCowBQYDK2VwAyEA7rH4XlPKelMPEGMAPQCr9_b74rjNvkulTbEHDceENVQ',
+          authenticatorData:
+            'SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2NBAAAAAQECAwQFBgcIAQIDBAUGBwgAINVCXe0FnAWF8b3O6Z7xjWNOS_KwEWVoTO2emnIWfH-MpAEBAycgBiFYIO6x-F5TynpTDxBjAD0Aq_f2--K4zb5LpU2xBw3HhDVU',
+        },
+        type: 'public-key',
+        clientExtensionResults: {
+          credProps: {
+            rk: false,
+          },
+        },
+        authenticatorAttachment: 'platform',
+      };
+
+      // Mock the response from verifyRegistrationResponse
+      // This method relies on client (authenticator) encryption, therefore is hard to simulate
+      const mockVerifyRegistrationResponse: VerifiedRegistrationResponse = {
+        verified: true,
+        registrationInfo: {
+          fmt: 'none' as AttestationFormat,
+          aaguid: '00000000-0000-0000-0000-000000000000',
+          credentialType: 'public-key',
+          credential: {
+            id: 'cx1PZwjN7N-xsUUIY9j1-JRQhfhe2-Hw_1s-OEfKPrE',
+            publicKey: new Uint8Array([164, 1, 1, 3, 39]),
+            counter: 1,
+            transports: ['usb'],
+          },
+          attestationObject: new Uint8Array([163, 99, 102, 109]),
+          userVerified: true,
+          credentialDeviceType: 'singleDevice',
+          credentialBackedUp: false,
+          origin: ORIGIN,
+          rpID: RP_ID,
+        },
+      };
+
+      // Create input for verifyRegistration ednpoint
+      const verifiRegistrationDto = {
+        email: 'example@email.com',
+        response: mockedCreationResponse,
+      };
+
+      (webauthn.verifyRegistrationResponse as jest.Mock).mockResolvedValue(
+        mockVerifyRegistrationResponse,
+      );
+
+      // Simulate the setting of options in the cache
+      await cacheManager.set(verifiRegistrationDto.email, options, 300000);
+
+      const mockPrismaCreate = jest
+        .spyOn(authService['prisma'].passkey, 'create')
+        .mockResolvedValue({
+          userId: 'mockUserID',
+          id: 'mockCredentialID',
+          publicKey: Buffer.from('mockPublicKey'),
+          webauthnUserID: 'mockUserID',
+          counter: 0,
+          transport: 'usb',
+          deviceType: 'singleDevice',
+          backedUp: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+
+      const response = await request(httpServer)
+        .post('/auth/webauthn/verify-registration-response')
+        .send(verifiRegistrationDto);
+
+      expect(response).toBeDefined();
+      expect(response.status).toBe(201);
+      expect(response.body).toHaveProperty('verified', true);
+      expect(webauthn.verifyRegistrationResponse).toHaveBeenCalledWith({
+        response: mockedCreationResponse,
+        expectedChallenge: options.challenge,
+        expectedOrigin: ORIGIN,
+        expectedRPID: RP_ID,
+      });
+      expect(mockPrismaCreate).toHaveBeenCalledWith({
+        data: {
+          user: {
+            connect: { email: verifiRegistrationDto.email },
+          },
+          id: mockVerifyRegistrationResponse.registrationInfo?.credential?.id,
+          publicKey:
+            mockVerifyRegistrationResponse.registrationInfo?.credential
+              ?.publicKey,
+          webauthnUserID: options.user.id,
+          counter:
+            mockVerifyRegistrationResponse?.registrationInfo?.credential
+              ?.counter,
+          transport:
+            mockVerifyRegistrationResponse?.registrationInfo?.credential?.transports?.join(
+              ',',
+            ) || '',
+          deviceType:
+            mockVerifyRegistrationResponse.registrationInfo
+              ?.credentialDeviceType,
+          backedUp:
+            mockVerifyRegistrationResponse?.registrationInfo
+              ?.credentialBackedUp,
+        },
+      });
+    });
   });
 
   afterAll(async () => {

@@ -12,6 +12,7 @@ import {
 } from '@aws-sdk/client-cognito-identity-provider';
 import { BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { CacheModule } from '@nestjs/cache-manager';
 
 // This unit tests assert that the AuthController:
 // - is defined correctly
@@ -24,7 +25,7 @@ describe('PasswordController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [PrismaModule, ConfigModule],
+      imports: [PrismaModule, ConfigModule, CacheModule.register()],
       controllers: [AuthController],
       providers: [AuthService, JwtService],
     }).compile();

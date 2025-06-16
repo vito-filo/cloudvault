@@ -1,5 +1,11 @@
-import { Injectable, HttpStatus, HttpException } from '@nestjs/common';
-import { ConfirmSignupDto, LoginDto, SignupDto, LoginOutputDto } from './dto';
+import { Injectable, HttpStatus, HttpException, Inject } from '@nestjs/common';
+import {
+  ConfirmSignupDto,
+  LoginDto,
+  SignupDto,
+  LoginOutputDto,
+  VerifyRegistrationDto,
+} from './dto';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CognitoIdentityProviderClient,
@@ -11,17 +17,32 @@ import {
 import * as crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import {
+  generateRegistrationOptions,
+  verifyRegistrationResponse,
+  AuthenticatorTransportFuture,
+  PublicKeyCredentialCreationOptionsJSON,
+} from '@simplewebauthn/server';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { Cache } from 'cache-manager'; // ! Don't forget this import
+
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { GenerateRegistrationOptionsDto } from './dto/generate-registration-options.dto';
 
 @Injectable()
 export class AuthService {
   private readonly CLIENT_ID: string;
   private readonly CLIENT_SECRET: string;
   private readonly client: CognitoIdentityProviderClient;
+  private readonly RP_NAME: string;
+  private readonly RP_ID: string;
+  private readonly RP_ORIGIN: string;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
     this.CLIENT_ID = this.configService.get<string>('CLIENT_ID', 'undefined');
     this.CLIENT_SECRET = this.configService.get<string>(
@@ -31,6 +52,10 @@ export class AuthService {
     this.client = new CognitoIdentityProviderClient({
       region: 'eu-south-1',
     });
+
+    this.RP_NAME = this.configService.get<string>('RP_NAME', 'undefined');
+    this.RP_ID = this.configService.get<string>('RP_ID', 'undefined');
+    this.RP_ORIGIN = this.configService.get<string>('RP_ORIGIN', 'undefined');
   }
 
   private generateSecretHash(
@@ -134,6 +159,114 @@ export class AuthService {
         console.error('Error during confirmation:', error);
         throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
       }
+    }
+  }
+
+  async generateRegistrationOptions(
+    generateRegistrationDto: GenerateRegistrationOptionsDto,
+  ) {
+    const { email, userName } = generateRegistrationDto;
+
+    try {
+      const userPasskeys = await this.prisma.passkey.findMany({
+        where: { user: { email: email } },
+      });
+
+      const options: PublicKeyCredentialCreationOptionsJSON =
+        await generateRegistrationOptions({
+          rpName: this.RP_NAME,
+          rpID: this.RP_ID,
+          userName: userName,
+          attestationType: 'none',
+          // Prevent users from re-registering existing authenticators
+          excludeCredentials: userPasskeys.map((passkey) => ({
+            id: passkey.id,
+            // Optional
+            transports: passkey.transport.split(
+              ',',
+            ) as AuthenticatorTransportFuture[],
+          })),
+          authenticatorSelection: {
+            residentKey: 'discouraged',
+            userVerification: 'preferred',
+          },
+        });
+
+      // Store the options in the cache for 5 minutes
+      await this.cacheManager.set(email, options, 300000);
+
+      return options;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        throw new HttpException(
+          'Email already exists',
+          HttpStatus.CONFLICT, // 409 Conflict
+        );
+      }
+      throw new HttpException(
+        'Something went wrong while generating registration options',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async verifyRegistrationResponse(
+    verifyRegistrationDto: VerifyRegistrationDto,
+  ) {
+    try {
+      const email = verifyRegistrationDto.email;
+      const cachedOptions =
+        await this.cacheManager.get<PublicKeyCredentialCreationOptionsJSON>(
+          email,
+        );
+      if (!cachedOptions) {
+        throw new HttpException(
+          `No registration options found for email: ${email}`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const response = await verifyRegistrationResponse({
+        response: verifyRegistrationDto.response,
+        expectedChallenge: cachedOptions.challenge,
+        expectedOrigin: this.RP_ORIGIN,
+        expectedRPID: this.RP_ID,
+      });
+
+      const { registrationInfo } = response;
+      if (!response.verified || !registrationInfo) {
+        throw new HttpException(
+          'Registration response verification failed',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // Save the passkey to the database
+      const { credential, credentialDeviceType, credentialBackedUp } =
+        registrationInfo;
+
+      await this.prisma.passkey.create({
+        data: {
+          user: {
+            connect: { email: email },
+          },
+          id: credential.id,
+          publicKey: credential.publicKey,
+          webauthnUserID: cachedOptions.user.id,
+          counter: credential.counter,
+          transport: credential.transports?.join(',') || '',
+          deviceType: credentialDeviceType,
+          backedUp: credentialBackedUp,
+        },
+      });
+
+      return response;
+    } catch (error) {
+      console.error('Error during registration verification:', error);
+      throw new HttpException(
+        'Failed to verify registration response',
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 }
