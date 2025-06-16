@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
   ConfirmSignupDto,
@@ -6,6 +13,7 @@ import {
   SignupDto,
   VerifyRegistrationDto,
   GenerateRegistrationOptionsDto,
+  VeryfiAuthenticationDto,
 } from './dto';
 import { Public } from './jwt-auth.guard';
 
@@ -39,5 +47,22 @@ export class AuthController {
     @Body() verifyRegistrationDto: VerifyRegistrationDto,
   ) {
     return this.authService.verifyRegistrationResponse(verifyRegistrationDto);
+  }
+
+  @Get('/webauthn/generate-authentication-options')
+  getAuthenticationOptions(@Query('email') email: string) {
+    if (!email) {
+      throw new BadRequestException('Email parameter is required');
+    }
+    return this.authService.getAuthenticationOptions(email);
+  }
+
+  @Post('/webauthn/verify-authentication-response')
+  verifyAuthenticationResponse(
+    @Body() verifyAuthenticationDto: VeryfiAuthenticationDto,
+  ) {
+    return this.authService.verifyAuthenticationResponse(
+      verifyAuthenticationDto,
+    );
   }
 }

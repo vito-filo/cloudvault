@@ -22,6 +22,8 @@ import * as webauthn from '@simplewebauthn/server';
 // - Valitation fails with appropriate message when called with wrong input DTOs
 // - Generates valid WebAuthn registration options
 // - Verifies WebAuthn registration responses correctly
+// - Generate cvalid WebAuthn authentication options
+// - Verifies WebAuthn authentication responses correctly
 
 // This tells Jest to mock the module BUT retain the real implementation
 jest.mock('@simplewebauthn/server', () => {
@@ -29,7 +31,8 @@ jest.mock('@simplewebauthn/server', () => {
   const actual: typeof webauthn = jest.requireActual('@simplewebauthn/server');
   return {
     ...actual,
-    verifyRegistrationResponse: jest.fn(), // <-- override only this
+    verifyRegistrationResponse: jest.fn(),
+    verifyAuthenticationResponse: jest.fn(),
   };
 });
 
@@ -228,6 +231,7 @@ describe('Webauthn', () => {
   const ORIGIN = 'http://localhost:8000';
   const RP_NAME = 'Cloud-Vault';
   const RP_ID = 'localhost';
+  const EMAIL = 'example@email.com';
 
   const options: PublicKeyCredentialCreationOptionsJSON = {
     challenge: CHALLENGE,
@@ -290,7 +294,7 @@ describe('Webauthn', () => {
   describe('GET /webauthn/generate-registration-options', () => {
     it('should generate valid registration options', async () => {
       const options = await request(httpServer).get(
-        '/auth/webauthn/generate-registration-options?email=example@email.com&userName=exampleUser',
+        `/auth/webauthn/generate-registration-options?email=${EMAIL}&userName=exampleUser`,
       );
 
       expect(options).toBeDefined();
@@ -369,7 +373,7 @@ describe('Webauthn', () => {
 
       // Create input for verifyRegistration ednpoint
       const verifiRegistrationDto = {
-        email: 'example@email.com',
+        email: EMAIL,
         response: mockedCreationResponse,
       };
 
@@ -431,6 +435,139 @@ describe('Webauthn', () => {
           backedUp:
             mockVerifyRegistrationResponse?.registrationInfo
               ?.credentialBackedUp,
+        },
+      });
+    });
+  });
+
+  describe('GET /webauthn/generate-authentication-options', () => {
+    it('should generate valid authentication options', async () => {
+      jest.spyOn(authService['prisma'].passkey, 'findMany').mockResolvedValue([
+        {
+          userId: 'mockUserID',
+          id: 'mockCredentialID',
+          publicKey: Buffer.from('mockPublicKey'),
+          webauthnUserID: 'mockUserID',
+          counter: 0,
+          transport: 'usb',
+          deviceType: 'singleDevice',
+          backedUp: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ]);
+
+      const authOptions = await request(httpServer)
+        .get('/auth/webauthn/generate-authentication-options')
+        .query({ email: EMAIL });
+
+      expect(authOptions).toBeDefined();
+      expect(authOptions.status).toBe(200);
+      expect(authOptions.body).toHaveProperty('challenge');
+      expect(authOptions.body).toHaveProperty('rpId', RP_ID);
+      expect(authOptions.body).toHaveProperty(
+        'allowCredentials',
+        expect.any(Array),
+      );
+    });
+  });
+
+  describe('POST /webauthn/verify-authentication-response', () => {
+    it('should verify a valid authentication response', async () => {
+      const authenticationResponse = {
+        id: 'G7r3QpKof8RWTZGUGTPbZhnCKGXrCtNlFOJnaO8CZRc',
+        rawId: 'G7r3QpKof8RWTZGUGTPbZhnCKGXrCtNlFOJnaO8CZRc',
+        response: {
+          authenticatorData:
+            'SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAAAw',
+          clientDataJSON:
+            'eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoidGZUZHhqa3VIYnBTZ3BndXRsRlpfSnpoUjhwR0JhT3hqd1daclNUeHVGUSIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODAwMCIsImNyb3NzT3JpZ2luIjpmYWxzZSwib3RoZXJfa2V5c19jYW5fYmVfYWRkZWRfaGVyZSI6ImRvIG5vdCBjb21wYXJlIGNsaWVudERhdGFKU09OIGFnYWluc3QgYSB0ZW1wbGF0ZS4gU2VlIGh0dHBzOi8vZ29vLmdsL3lhYlBleCJ9',
+          signature:
+            'PDtEUy-WvTQI0me2VXKruhBfIdikzeoDOgsgvMPnuyHMgy7ILGrcyy9FbnnVQdYZKs-oC4JUu1Ud40p4dDaIDw',
+        },
+        type: 'public-key',
+        clientExtensionResults: {},
+        authenticatorAttachment: 'cross-platform',
+      };
+
+      const mockVerifyRegistrationResponse = {
+        verified: true,
+        authenticationInfo: {
+          newCounter: 3,
+          credentialID: 'G7r3QpKof8RWTZGUGTPbZhnCKGXrCtNlFOJnaO8CZRc',
+          userVerified: true,
+          credentialDeviceType: 'singleDevice',
+          credentialBackedUp: false,
+          origin: 'http://localhost:8000',
+          rpID: 'localhost',
+        },
+      };
+
+      // Create input for verifyRegistration ednpoint
+      const verifyAuthenticationDto = {
+        email: EMAIL,
+        response: authenticationResponse,
+      };
+
+      const mockedAuthOptions = {
+        rpId: 'localhost',
+        challenge: 'tfTdxjkuHbpSgpgutlFZ_JzhR8pGBaOxjwWZrSTxuFQ',
+        allowCredentials: [
+          {
+            id: 'AGePhZV9jNu968R4aglza-ubWiIF1fyVxsetqQoX62o',
+            transports: ['usb'],
+            type: 'public-key',
+          },
+          {
+            id: 'G7r3QpKof8RWTZGUGTPbZhnCKGXrCtNlFOJnaO8CZRc',
+            transports: ['usb'],
+            type: 'public-key',
+          },
+        ],
+        timeout: 60000,
+        userVerification: 'preferred',
+      };
+
+      jest.spyOn(authService['prisma'].passkey, 'findFirst').mockResolvedValue({
+        userId: 'mockUserID',
+        id: 'mockCredentialID',
+        publicKey: Buffer.from('mockPublicKey'),
+        webauthnUserID: 'mockUserID',
+        counter: 0,
+        transport: 'usb',
+        deviceType: 'singleDevice',
+        backedUp: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      (webauthn.verifyAuthenticationResponse as jest.Mock).mockResolvedValue(
+        mockVerifyRegistrationResponse,
+      );
+
+      // Simulate the setting of options in the cache
+      await cacheManager.set(
+        verifyAuthenticationDto.email,
+        mockedAuthOptions,
+        300000,
+      );
+
+      const response = await request(httpServer)
+        .post('/auth/webauthn/verify-authentication-response')
+        .send(verifyAuthenticationDto);
+
+      expect(response).toBeDefined();
+      expect(response.status).toBe(201);
+      expect(response.body).toHaveProperty('verified', true);
+      expect(webauthn.verifyAuthenticationResponse).toHaveBeenCalledWith({
+        response: authenticationResponse,
+        expectedChallenge: mockedAuthOptions.challenge,
+        expectedOrigin: ORIGIN,
+        expectedRPID: RP_ID,
+        credential: {
+          id: 'mockCredentialID',
+          publicKey: Buffer.from('mockPublicKey'),
+          counter: 0,
+          transports: ['usb'],
         },
       });
     });

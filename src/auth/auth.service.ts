@@ -5,6 +5,7 @@ import {
   SignupDto,
   LoginOutputDto,
   VerifyRegistrationDto,
+  VeryfiAuthenticationDto,
 } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -20,8 +21,11 @@ import { JwtService } from '@nestjs/jwt';
 import {
   generateRegistrationOptions,
   verifyRegistrationResponse,
+  generateAuthenticationOptions,
+  verifyAuthenticationResponse,
   AuthenticatorTransportFuture,
   PublicKeyCredentialCreationOptionsJSON,
+  PublicKeyCredentialRequestOptionsJSON,
 } from '@simplewebauthn/server';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { Cache } from 'cache-manager'; // ! Don't forget this import
@@ -265,6 +269,83 @@ export class AuthService {
       console.error('Error during registration verification:', error);
       throw new HttpException(
         'Failed to verify registration response',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  async getAuthenticationOptions(email: string) {
+    try {
+      const userPasskeys = await this.prisma.passkey.findMany({
+        where: { user: { email: email } },
+      });
+
+      const options: PublicKeyCredentialRequestOptionsJSON =
+        await generateAuthenticationOptions({
+          rpID: this.RP_ID,
+          allowCredentials: userPasskeys.map((passkey) => ({
+            id: passkey.id,
+            transports: passkey.transport.split(
+              ',',
+            ) as AuthenticatorTransportFuture[],
+          })),
+        });
+
+      // Store the options in the cache for 5 minutes
+      await this.cacheManager.set(email, options, 300000);
+
+      return options;
+    } catch (error) {
+      console.error('Error during authentication options retrieval:', error);
+      throw new HttpException(
+        'Failed to retrieve authentication options',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  async verifyAuthenticationResponse(verificationDto: VeryfiAuthenticationDto) {
+    try {
+      const { email, response } = verificationDto;
+
+      const currentOptions =
+        await this.cacheManager.get<PublicKeyCredentialRequestOptionsJSON>(
+          email,
+        );
+
+      const userPasskey = await this.prisma.passkey.findFirst({
+        where: {
+          AND: [{ user: { email: email } }, { id: response.id }],
+        },
+      });
+
+      if (!currentOptions || !userPasskey) {
+        throw new HttpException(
+          `No authentication options found for email: ${email}`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const verification = await verifyAuthenticationResponse({
+        response,
+        expectedChallenge: currentOptions.challenge,
+        expectedOrigin: this.RP_ORIGIN,
+        expectedRPID: this.RP_ID,
+        credential: {
+          id: userPasskey.id,
+          publicKey: userPasskey.publicKey,
+          counter: userPasskey.counter,
+          transports: userPasskey.transport.split(
+            ',',
+          ) as AuthenticatorTransportFuture[],
+        },
+      });
+
+      return verification;
+    } catch (error) {
+      console.error('Error during authentication verification:', error);
+      throw new HttpException(
+        'Failed to verify authentication response',
         HttpStatus.BAD_REQUEST,
       );
     }
