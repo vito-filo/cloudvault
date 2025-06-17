@@ -18,7 +18,9 @@ type IconSymbolName = keyof typeof MAPPING;
  * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
  */
 const MAPPING = {
+  "person.badge.key": "person-add",
   "doc.on.clipboard.fill": "content-copy",
+  "faceid": "fingerprint",
   "plus.circle.fill": "add-circle",
   "ellipsis.circle.fill": "settings",
   "plus.square.fill.on.square.fill": "group-add",

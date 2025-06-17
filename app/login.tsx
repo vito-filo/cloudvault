@@ -1,266 +1,225 @@
-import {
-  Alert,
-  Image,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  TouchableWithoutFeedback,
-  View,
-} from "react-native";
-
+import { IconSymbol } from "@/components/ui/IconSymbol";
 import { useSession } from "@/context/authContext";
 import { useApi } from "@/hooks/useApi";
+import {
+  PublicKeyCredentialCreationOptionsJSON,
+  PublicKeyCredentialRequestOptionsJSON,
+  startAuthentication,
+  startRegistration,
+} from "@simplewebauthn/browser";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import {
+  Image,
+  ImageBackground,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { validateEmail } from "../utils/validate-email";
 
-const logo = require("../assets/images/favicon.png");
-const facebook = require("../assets/images/favicon.png");
-const linkedin = require("../assets/images/favicon.png");
-const tiktok = require("../assets/images/favicon.png");
+const logo = require("../assets/images/icon.png");
+const clouds = require("../assets/images/clouds.jpg");
+
+type AuthResponse = {
+  accessToken: string;
+  user: {
+    id: number;
+    email: string;
+  };
+  verified: boolean;
+  authenticationInfo: {
+    credentialID: string;
+    newCounter: number;
+    userVerified: boolean;
+    credentialDeviceType: "singleDevice" | "multiDevice";
+    credentialBackedUp: boolean;
+    origin: string;
+    rpID: string;
+    authenticatorExtensionResults?: unknown;
+  };
+};
 
 export default function Login() {
-  const { signIn } = useSession();
-  const [click, setClick] = useState(false);
-  const [email, setEmail] = useState("fertemupsa@gufum.com");
-  const [password, setPassword] = useState("ExamplePassword123!");
+  const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState(false);
-  const [passwordError, setPasswordError] = useState(false);
   const { apiFetch } = useApi();
-
+  const { signIn } = useSession();
   const router = useRouter();
 
-  async function handleLogin() {
-    console.log("Login button pressed");
-    if (email === undefined || email.trim() === "") {
+  const handleRegister = async () => {
+    if (!validateEmail(email)) {
       setEmailError(true);
-      Alert.alert("Error", "Email can't be empty");
       return;
-    } else {
-      setEmailError(false);
     }
-
-    if (password === undefined || password.trim() === "") {
-      setPasswordError(true);
-      Alert.alert("Error", "Password can't be empty");
-      return;
-    } else {
-      setPasswordError(false);
-    }
+    setEmailError(false);
 
     try {
-      const response = await apiFetch<{ accessToken: string }>("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      });
-      signIn(JSON.stringify(response));
-      router.navigate("/(tabs)");
+      // Get Registration Options from the server
+      const regOptions: PublicKeyCredentialCreationOptionsJSON = await apiFetch(
+        `/auth/webauthn/generate-registration-options?email=${email}`,
+        { method: "Get" }
+      );
+      console.log("Registration options:", regOptions);
+
+      // Ask the authenticator to register a new credential
+      const regRequest = await startRegistration({ optionsJSON: regOptions });
+
+      // Send the registration response to the server for verification
+      const regResponse = await apiFetch(
+        "/auth/webauthn/verify-registration-response",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            email: email,
+            response: regRequest,
+          }),
+        }
+      );
+      console.log("Registration response:", regResponse);
     } catch (error) {
-      setEmailError(true);
-      setPasswordError(true);
-      alert("Login failed. Please check your credentials.");
-      console.error("Failed to Login: ", error);
+      console.error("Registration failed:", error);
+      alert("Registration failed. Please try again.");
     }
-  }
+  };
+
+  const handleLogin = async () => {
+    if (!validateEmail(email)) {
+      setEmailError(true);
+      return;
+    }
+    setEmailError(false);
+
+    try {
+      const authOptions: PublicKeyCredentialRequestOptionsJSON = await apiFetch(
+        `/auth/webauthn/generate-authentication-options?email=${email}`,
+        { method: "GET" }
+      );
+
+      console.log("auth options:", authOptions);
+      const authRequest = await startAuthentication({
+        optionsJSON: authOptions,
+      });
+
+      console.log("auth request:", authRequest);
+      const authResponse: AuthResponse = await apiFetch(
+        "/auth/webauthn/verify-authentication-response",
+        {
+          method: "POST",
+          body: JSON.stringify({ email: email, response: authRequest }),
+        }
+      );
+      signIn(
+        JSON.stringify({
+          accessToken: authResponse.accessToken,
+          user: authResponse.user,
+        })
+      );
+      router.navigate("/(tabs)");
+      console.log("auth response:", authResponse);
+    } catch (error) {
+      console.error("Authentication failed:", error);
+      alert("Authentication failed. Please try again.");
+    }
+  };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={loginStyle.container}
+    <ImageBackground
+      source={clouds}
+      resizeMode="cover"
+      style={styles.background}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView contentContainerStyle={loginStyle.scrollView}>
-          <Image source={logo} style={loginStyle.image} resizeMode="contain" />
-          <Text style={loginStyle.title}>Login</Text>
-          <View style={loginStyle.inputView}>
-            <TextInput
-              style={[loginStyle.input, emailError && loginStyle.errorBorder]}
-              placeholder="EMAIL OR USERNAME"
-              value={email}
-              onChangeText={setEmail}
-              autoCorrect={false}
-              autoCapitalize="none"
-            />
-            <TextInput
-              style={[
-                loginStyle.input,
-                passwordError && loginStyle.errorBorder,
-              ]}
-              placeholder="PASSWORD"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-              autoCorrect={false}
-              autoCapitalize="none"
-            />
-          </View>
-          <View style={loginStyle.rememberView}>
-            <View style={loginStyle.switch}>
-              <Switch
-                value={click}
-                onValueChange={setClick}
-                trackColor={{ true: "green", false: "gray" }}
-              />
-              <Text style={loginStyle.rememberText}>Remember Me</Text>
-            </View>
-            <View>
-              <Pressable onPress={() => Alert.alert("Forget Password!")}>
-                <Text style={loginStyle.forgetText}>Forgot Password?</Text>
-              </Pressable>
-            </View>
-          </View>
-
-          <View style={loginStyle.buttonView}>
-            <Pressable style={loginStyle.button} onPress={() => handleLogin()}>
-              <Text style={loginStyle.buttonText}>LOGIN</Text>
-            </Pressable>
-            <Text style={loginStyle.optionsText}>OR LOGIN WITH</Text>
-          </View>
-
-          <View style={loginStyle.mediaIcons}>
-            <Image source={facebook} style={loginStyle.icons} />
-            <Image source={tiktok} style={loginStyle.icons} />
-            <Image source={linkedin} style={loginStyle.icons} />
-          </View>
-
-          <Text style={loginStyle.footerText}>
-            {" "}
-            Don&apos;t Have Account?
-            <Text
-              style={loginStyle.signup}
-              onPress={() => router.navigate("/signup")}
-            >
-              {" "}
-              Sign Up
-            </Text>
-          </Text>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+      <View style={styles.container}>
+        {" "}
+        <Image source={logo} style={styles.image} />
+        <Text style={styles.title}>Welcome</Text>
+        <Text style={styles.subtitle}>Enter your email</Text>
+        {emailError && (
+          <Text style={styles.errorTextInput}>* Email is mandatory</Text>
+        )}
+        <TextInput
+          style={[styles.emailInput, emailError && styles.errorBorder]}
+          placeholder="Email"
+          autoCapitalize="none"
+          onChangeText={setEmail}
+        ></TextInput>
+        <Pressable style={styles.button} onPress={handleLogin}>
+          <IconSymbol size={28} name="faceid" color={"black"} />
+          <Text style={styles.buttonText}>Login with a passkey</Text>
+        </Pressable>
+        <Pressable style={styles.button} onPress={handleRegister}>
+          <IconSymbol size={28} name="person.badge.key" color={"black"} />
+          <Text style={styles.buttonText}>Register</Text>
+        </Pressable>
+      </View>
+    </ImageBackground>
   );
 }
 
-const loginStyle = StyleSheet.create({
-  container: {
+const styles = StyleSheet.create({
+  background: {
     flex: 1,
     justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
   },
-  scrollView: {
-    flexGrow: 1,
-    justifyContent: "center",
+  container: {
+    width: "90%",
+    height: "75%",
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    alignItems: "center",
   },
   image: {
-    alignSelf: "center",
-    height: 160,
-    width: 170,
+    width: 100,
+    height: 100,
+    marginBottom: 20,
+    marginTop: 20,
   },
   title: {
-    fontSize: 30,
+    fontSize: 24,
     fontWeight: "bold",
-    textTransform: "uppercase",
-    textAlign: "center",
-    paddingVertical: 40,
-    color: "red",
+    marginBottom: 20,
   },
-  inputView: {
-    gap: 15,
-    width: "100%",
-    paddingHorizontal: 40,
-    marginBottom: 5,
+  subtitle: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 20,
   },
-  input: {
-    height: 50,
-    paddingHorizontal: 20,
-    borderColor: "black",
-    borderWidth: 1,
-    borderRadius: 7,
-  },
-  passwordInput: {
-    height: "100%",
-    width: "90%",
-  },
-  passwordContainer: {
-    height: 50,
-    paddingHorizontal: 20,
-    borderColor: "black",
-    borderWidth: 1,
-    borderRadius: 7,
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  rememberView: {
-    width: "100%",
-    paddingHorizontal: 50,
-    justifyContent: "space-between",
-    alignItems: "center",
-    flexDirection: "row",
-    marginBottom: 8,
-  },
-  switch: {
-    flexDirection: "row",
-    gap: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  rememberText: {
-    fontSize: 13,
-  },
-  forgetText: {
-    fontSize: 11,
-    color: "red",
-  },
-  button: {
-    backgroundColor: "red",
-    height: 45,
-    borderColor: "gray",
-    borderWidth: 1,
-    borderRadius: 5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  buttonView: {
-    width: "100%",
-    paddingHorizontal: 50,
-  },
-  optionsText: {
-    textAlign: "center",
-    paddingVertical: 10,
-    color: "gray",
-    fontSize: 13,
-    marginBottom: 6,
-  },
-  mediaIcons: {
-    flexDirection: "row",
-    gap: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 23,
-  },
-  icons: {
-    width: 40,
+  emailInput: {
+    width: "80%",
     height: 40,
-  },
-  footerText: {
-    textAlign: "center",
-    color: "gray",
-  },
-  signup: {
-    color: "red",
-    fontSize: 13,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 20,
   },
   errorBorder: {
     borderColor: "red",
     borderWidth: 1,
+  },
+  errorTextInput: {
+    color: "red",
+    fontSize: 10,
+    marginBottom: 3,
+    width: "80%",
+  },
+  button: {
+    width: "80%",
+    height: 50,
+    marginBottom: 10,
+    backgroundColor: "rgba(65, 180, 255, 0.8)",
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
+  },
+  buttonText: {
+    width: "60%",
+    marginLeft: 10,
+    textAlign: "center",
   },
 });
