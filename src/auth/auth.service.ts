@@ -1,4 +1,10 @@
-import { Injectable, HttpStatus, HttpException, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  HttpStatus,
+  HttpException,
+  Inject,
+  UnauthorizedException,
+} from '@nestjs/common';
 import {
   ConfirmSignupDto,
   LoginDto,
@@ -169,8 +175,8 @@ export class AuthService {
   async generateRegistrationOptions(
     generateRegistrationDto: GenerateRegistrationOptionsDto,
   ) {
-    const { email, userName } = generateRegistrationDto;
-
+    const { email } = generateRegistrationDto;
+    // TODO check if user already exists
     try {
       const userPasskeys = await this.prisma.passkey.findMany({
         where: { user: { email: email } },
@@ -180,7 +186,7 @@ export class AuthService {
         await generateRegistrationOptions({
           rpName: this.RP_NAME,
           rpID: this.RP_ID,
-          userName: userName,
+          userName: email,
           attestationType: 'none',
           // Prevent users from re-registering existing authenticators
           excludeCredentials: userPasskeys.map((passkey) => ({
@@ -252,7 +258,12 @@ export class AuthService {
       await this.prisma.passkey.create({
         data: {
           user: {
-            connect: { email: email },
+            create: {
+              email: email,
+              provider: 'Webauthn',
+              providerId: credential.id,
+              userConfirmed: false,
+            },
           },
           id: credential.id,
           publicKey: credential.publicKey,
@@ -341,6 +352,19 @@ export class AuthService {
         },
       });
 
+      if (verification.verified === false) {
+        throw new UnauthorizedException('Authentication failed');
+      }
+      const payload = { sub: userPasskey.userId, username: email };
+      return {
+        verified: verification.verified,
+        registrationInfo: verification.authenticationInfo,
+        accessToken: await this.jwtService.signAsync(payload),
+        user: {
+          id: userPasskey.userId,
+          email: email,
+        },
+      };
       return verification;
     } catch (error) {
       console.error('Error during authentication verification:', error);
