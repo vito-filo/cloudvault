@@ -4,14 +4,14 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaModule } from '../prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthController } from './auth.controller';
-import { CacheModule } from '@nestjs/cache-manager';
+import { DynamoModule } from '../dynamoDB/dynamo.module';
 
 describe('AuthService', () => {
   let service: AuthService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [PrismaModule, ConfigModule, CacheModule.register()],
+      imports: [PrismaModule, ConfigModule, DynamoModule],
       controllers: [AuthController],
       providers: [AuthService, JwtService],
     }).compile();
@@ -19,7 +19,11 @@ describe('AuthService', () => {
     service = module.get<AuthService>(AuthService);
   });
 
-  it('should be defined', () => {
+  it('should be defined with dependencies', () => {
     expect(service).toBeDefined();
+    expect(service['configService']).toBeDefined();
+    expect(service['prisma']).toBeDefined();
+    expect(service['jwtService']).toBeDefined();
+    expect(service['dynamoClient']).toBeDefined();
   });
 });

@@ -3,6 +3,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { PrismaModule } from '../prisma/prisma.module';
+import { DynamoModule } from '../dynamoDB/dynamo.module';
 import { AuthService } from './auth.service';
 import { ConfigModule } from '@nestjs/config';
 import { SignupDto, LoginDto, ConfirmSignupDto, LoginOutputDto } from './dto';
@@ -12,7 +13,6 @@ import {
 } from '@aws-sdk/client-cognito-identity-provider';
 import { BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { CacheModule } from '@nestjs/cache-manager';
 
 // This unit tests assert that the AuthController:
 // - is defined correctly
@@ -25,7 +25,7 @@ describe('PasswordController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [PrismaModule, ConfigModule, CacheModule.register()],
+      imports: [PrismaModule, ConfigModule, DynamoModule],
       controllers: [AuthController],
       providers: [AuthService, JwtService],
     }).compile();

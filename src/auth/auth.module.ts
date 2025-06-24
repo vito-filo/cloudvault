@@ -5,24 +5,10 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthGuard } from './jwt-auth.guard';
 import { APP_GUARD } from '@nestjs/core';
-import { CacheModule } from '@nestjs/cache-manager';
-import { createKeyv } from '@keyv/redis';
+import { DynamoModule } from '../dynamoDB/dynamo.module';
 
 @Module({
   imports: [
-    CacheModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        return {
-          stores: [
-            createKeyv(
-              configService.get<string>('REDIS_URL', 'redis://localhost:6379'),
-            ),
-          ],
-        };
-      },
-    }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -31,6 +17,7 @@ import { createKeyv } from '@keyv/redis';
         signOptions: { expiresIn: '60m' },
       }),
     }),
+    DynamoModule,
   ],
   controllers: [AuthController],
   providers: [

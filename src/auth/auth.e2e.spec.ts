@@ -9,13 +9,12 @@ import {
   PublicKeyCredentialCreationOptionsJSON,
   RegistrationResponseJSON,
 } from '@simplewebauthn/server';
-import { Cache } from 'cache-manager';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   AttestationFormat,
   VerifiedRegistrationResponse,
 } from '@simplewebauthn/server';
 import * as webauthn from '@simplewebauthn/server';
+import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 
 // This unit tests assert that the AuthController:
 // - Validate correct input DTOs
@@ -225,7 +224,7 @@ describe('Webauthn', () => {
   let app: INestApplication;
   let httpServer: import('http').Server;
   let authService: AuthService;
-  let cacheManager: Cache;
+  let dynamoClient: DynamoDBDocument;
 
   const CHALLENGE = 'bBUO4KrQm0JWURfcSsqj_saQgUNqFeFtj9soQNyPfgA';
   const ORIGIN = process.env.RP_ORIGIN || 'http://localhost:8000';
@@ -281,7 +280,7 @@ describe('Webauthn', () => {
     httpServer = app.getHttpServer() as unknown as Server;
     app.useGlobalPipes(new ValidationPipe());
 
-    cacheManager = app.get<Cache>(CACHE_MANAGER);
+    dynamoClient = app.get<DynamoDBDocument>('DYNAMO_CLIENT');
     authService = moduleRef.get<AuthService>(AuthService);
 
     await app.init();
@@ -382,7 +381,14 @@ describe('Webauthn', () => {
       );
 
       // Simulate the setting of options in the cache
-      await cacheManager.set(verifiRegistrationDto.email, options, 300000);
+      await dynamoClient.put({
+        TableName: 'registration',
+        Item: {
+          email: verifiRegistrationDto.email,
+          options: options,
+          ttl: Math.floor(Date.now() / 1000) + 300,
+        },
+      });
 
       const mockPrismaCreate = jest
         .spyOn(authService['prisma'].passkey, 'create')
@@ -521,11 +527,14 @@ describe('Webauthn', () => {
       );
 
       // Simulate the setting of options in the cache
-      await cacheManager.set(
-        verifyAuthenticationDto.email,
-        mockedAuthOptions,
-        300000,
-      );
+      await dynamoClient.put({
+        TableName: 'registration',
+        Item: {
+          email: verifyAuthenticationDto.email,
+          options: mockedAuthOptions,
+          ttl: Math.floor(Date.now() / 1000) + 300,
+        },
+      });
 
       const response = await request(httpServer)
         .post('/auth/webauthn/verify-authentication-response')

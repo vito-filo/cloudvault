@@ -34,10 +34,8 @@ import {
   PublicKeyCredentialRequestOptionsJSON,
 } from '@simplewebauthn/server';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { Cache } from 'cache-manager'; // ! Don't forget this import
-
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { GenerateRegistrationOptionsDto } from './dto/generate-registration-options.dto';
+import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 
 @Injectable()
 export class AuthService {
@@ -52,7 +50,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    @Inject('DYNAMO_CLIENT') private dynamoClient: DynamoDBDocument,
   ) {
     this.CLIENT_ID = this.configService.get<string>('CLIENT_ID', 'undefined');
     this.CLIENT_SECRET = this.configService.get<string>(
@@ -203,7 +201,14 @@ export class AuthService {
         });
 
       // Store the options in the cache for 5 minutes
-      await this.cacheManager.set(email, options, 300000);
+      await this.dynamoClient.put({
+        TableName: 'registration',
+        Item: {
+          email,
+          options,
+          ttl: Math.floor(Date.now() / 1000) + 300,
+        },
+      });
 
       return options;
     } catch (error) {
@@ -225,10 +230,16 @@ export class AuthService {
   ) {
     try {
       const email = verifyRegistrationDto.email;
-      const cachedOptions =
-        await this.cacheManager.get<PublicKeyCredentialCreationOptionsJSON>(
-          email,
-        );
+      const cachedRawOptions = await this.dynamoClient.get({
+        TableName: 'registration',
+        Key: { email },
+        AttributesToGet: ['options'],
+      });
+
+      // TODO add zod checks
+      const cachedOptions = cachedRawOptions.Item
+        ?.options as PublicKeyCredentialCreationOptionsJSON;
+
       if (!cachedOptions) {
         throw new HttpException(
           `No registration options found for email: ${email}`,
@@ -303,7 +314,14 @@ export class AuthService {
         });
 
       // Store the options in the cache for 5 minutes
-      await this.cacheManager.set(email, options, 300000);
+      await this.dynamoClient.put({
+        TableName: 'registration',
+        Item: {
+          email,
+          options,
+          ttl: Math.floor(Date.now() / 1000) + 300,
+        },
+      });
 
       return options;
     } catch (error) {
@@ -319,10 +337,15 @@ export class AuthService {
     try {
       const { email, response } = verificationDto;
 
-      const currentOptions =
-        await this.cacheManager.get<PublicKeyCredentialRequestOptionsJSON>(
-          email,
-        );
+      const cachedRawOptions = await this.dynamoClient.get({
+        TableName: 'registration',
+        Key: { email },
+        AttributesToGet: ['options'],
+      });
+
+      // TODO add zod checks
+      const authOptions = cachedRawOptions.Item
+        ?.options as PublicKeyCredentialRequestOptionsJSON;
 
       const userPasskey = await this.prisma.passkey.findFirst({
         where: {
@@ -330,7 +353,7 @@ export class AuthService {
         },
       });
 
-      if (!currentOptions || !userPasskey) {
+      if (!authOptions || !userPasskey) {
         throw new HttpException(
           `No authentication options found for email: ${email}`,
           HttpStatus.BAD_REQUEST,
@@ -339,7 +362,7 @@ export class AuthService {
 
       const verification = await verifyAuthenticationResponse({
         response,
-        expectedChallenge: currentOptions.challenge,
+        expectedChallenge: authOptions.challenge,
         expectedOrigin: this.RP_ORIGIN,
         expectedRPID: this.RP_ID,
         credential: {
