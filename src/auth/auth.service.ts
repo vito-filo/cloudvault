@@ -339,7 +339,7 @@ export class AuthService {
       const { email, response } = verificationDto;
 
       const cachedRawOptions = await this.dynamoClient.get({
-        TableName: 'registration',
+        TableName: 'Registration',
         Key: { email },
         AttributesToGet: ['options'],
       });
