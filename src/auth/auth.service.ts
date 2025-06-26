@@ -202,7 +202,7 @@ export class AuthService {
 
       // Store the options in the cache for 5 minutes
       await this.dynamoClient.put({
-        TableName: 'registration',
+        TableName: 'Registration',
         Item: {
           email,
           options,
@@ -218,6 +218,7 @@ export class AuthService {
           HttpStatus.CONFLICT, // 409 Conflict
         );
       }
+      console.error('Error generating registration options:', error);
       throw new HttpException(
         'Something went wrong while generating registration options',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -231,7 +232,7 @@ export class AuthService {
     try {
       const email = verifyRegistrationDto.email;
       const cachedRawOptions = await this.dynamoClient.get({
-        TableName: 'registration',
+        TableName: 'Registration',
         Key: { email },
         AttributesToGet: ['options'],
       });
@@ -315,7 +316,7 @@ export class AuthService {
 
       // Store the options in the cache for 5 minutes
       await this.dynamoClient.put({
-        TableName: 'registration',
+        TableName: 'Registration',
         Item: {
           email,
           options,
