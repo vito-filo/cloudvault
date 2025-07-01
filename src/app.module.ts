@@ -12,22 +12,9 @@ import * as Joi from 'joi';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath:
+        process.env.NODE_ENV === 'production' ? '.env' : '.env.development',
       validationSchema: Joi.object({
-        CLIENT_ID: Joi.string()
-          .required()
-          .pattern(/^[a-zA-Z0-9_+]+$/)
-          .messages({
-            'string.pattern.base':
-              '"CLIENT_ID" fails to match the required pattern: /^[a-zA-Z0-9_+]+$/',
-          }),
-        CLIENT_SECRET: Joi.string()
-          .required()
-          .pattern(/^[a-zA-Z0-9_+]+$/)
-          .messages({
-            'string.pattern.base':
-              '"CLIENT_SECRET" fails to match the required pattern: /^[a-zA-Z0-9_+]+$/',
-          }),
-        USER_POOL_ID: Joi.string().required(),
         REGION: Joi.string().required(),
         AES_KEY: Joi.string()
           .required()
@@ -37,7 +24,6 @@ import * as Joi from 'joi';
               '"AES_KEY" fails to match the required pattern: /^[a-zA-Z0-9_+]+$/',
           }),
         JWT_SECRET: Joi.string().required(),
-        ALLOWED_ORIGINS: Joi.string().required(),
       }),
     }),
     AuthModule,
