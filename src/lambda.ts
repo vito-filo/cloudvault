@@ -17,6 +17,7 @@ async function bootstrap() {
     }),
   );
   app.use(new LoggingMiddleware().use);
+  app.setGlobalPrefix('api');
   app.enableCors({
     origin: process.env.ALLOWED_ORIGINS?.split(','),
     credentials: true,
