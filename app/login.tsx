@@ -68,7 +68,7 @@ export default function Login() {
       const regRequest = await startRegistration({ optionsJSON: regOptions });
 
       // Send the registration response to the server for verification
-      const regResponse = await apiFetch(
+      const regResponse: { verified: boolean } = await apiFetch(
         "/auth/webauthn/verify-registration-response",
         {
           method: "POST",
@@ -78,7 +78,10 @@ export default function Login() {
           }),
         }
       );
-      console.log("Registration response:", regResponse);
+      if (regResponse.verified) {
+        // Automatic login after registration
+        handleLogin();
+      }
     } catch (error) {
       console.error("Registration failed:", error);
       alert("Registration failed. Please try again.");
