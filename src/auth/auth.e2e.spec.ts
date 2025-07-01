@@ -382,7 +382,7 @@ describe('Webauthn', () => {
 
       // Simulate the setting of options in the cache
       await dynamoClient.put({
-        TableName: 'registration',
+        TableName: 'Registration',
         Item: {
           email: verifiRegistrationDto.email,
           options: options,
@@ -528,7 +528,7 @@ describe('Webauthn', () => {
 
       // Simulate the setting of options in the cache
       await dynamoClient.put({
-        TableName: 'registration',
+        TableName: 'Registration',
         Item: {
           email: verifyAuthenticationDto.email,
           options: mockedAuthOptions,
