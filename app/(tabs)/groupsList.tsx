@@ -14,6 +14,7 @@ import {
   SafeAreaView,
   Text,
   TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -75,6 +76,13 @@ export default function GroupsList() {
           <ActivityIndicator size="large" />
         ) : error ? (
           <Text>Error: {error}</Text>
+        ) : data.length === 0 ? (
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          >
+            <Text>No gorup found.</Text>
+            <Text>Use the Add (+) button to create a new group.</Text>
+          </View>
         ) : (
           <FlatList
             data={data}
