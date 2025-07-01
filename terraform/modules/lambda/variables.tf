@@ -21,10 +21,10 @@ variable "JWT_SECRET" {
   sensitive   = true
 }
 
-variable "allow_origins" {
-  description = "List of allowed origins for CORS"
-  type        = string
-}
+# variable "allow_origins" {
+#   description = "List of allowed origins for CORS"
+#   type        = string
+# }
 
 variable "rp_name" {
   description = "Name of the Relying Party (RP) for Webauthn"

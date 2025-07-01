@@ -14,6 +14,6 @@ output "api_gateway_url" {
   value = module.apigateway.api_gateway_url 
 }
 
-output "amplify_app_url" {
-  value = module.amplify.amplify_app_url
-}
+# output "amplify_app_url" {
+#   value = module.amplify.amplify_app_url
+# }

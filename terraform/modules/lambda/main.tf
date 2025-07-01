@@ -54,12 +54,17 @@ resource "aws_lambda_function" "backend" {
   timeout       = 10
   environment {
     variables = {
+      CLIENT_ID       = "aaa"
+      CLIENT_SECRET   = "bbb"
+      USER_POOL_ID    = "ccc"
+
       REGION = var.region
       AES_KEY = var.AES_KEY
       JWT_SECRET = var.JWT_SECRET
       DATABASE_URL = "postgresql://${var.rds_db_username}:${var.rds_db_password}@${var.rds_url}/${var.rds_db_name}"
 
-      ALLOWED_ORIGINS = var.allow_origins
+      # ALLOWED_ORIGINS = var.allow_origins
+      ALLOWED_ORIGINS = var.rp_origin
       RP_NAME = var.rp_name
       RP_ID = var.rp_id
       RP_ORIGIN = var.rp_origin

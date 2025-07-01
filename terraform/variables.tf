@@ -40,9 +40,10 @@ variable "jwt_secret" {
   sensitive   = true
 }
 
-variable "allow_origins" {
-  description = "List of allowed origins for CORS"
-  type        = string
+variable "dns_name" {
+  description = "DNS name for the CloudFront distribution"
+  type        = string 
+  default     = ""
 }
 
 variable "rp_name" {
@@ -66,13 +67,19 @@ variable "environment" {
   default     = "dev"  
 }
 
-variable "github_frontend_url" {
-  description = "GitHub repository URL for the Frontend app"
-  type        = string
-}
+# variable "github_frontend_url" {
+#   description = "GitHub repository URL for the Frontend app"
+#   type        = string
+# }
 
-variable "github_access_token" {
-  description = "GitHub access token to fetch the Frontend repository"
+# variable "github_access_token" {
+#   description = "GitHub access token to fetch the Frontend repository"
+#   type        = string
+#   sensitive   = true
+# }
+
+variable "acm_certificate_arn" {
+  description = "ARN of the ACM certificate for CloudFront"
   type        = string
-  sensitive   = true
+  default     = ""
 }

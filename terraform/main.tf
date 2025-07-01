@@ -64,7 +64,6 @@ module "lambda"{
   AES_KEY = var.aes_key
   JWT_SECRET = var.jwt_secret
 
-  allow_origins = var.allow_origins
   rp_name = var.rp_name
   rp_id = var.rp_id
   rp_origin = var.rp_origin
@@ -78,19 +77,47 @@ module "apigateway" {
   environment  = var.environment
 
   lambda_arn = module.lambda.lambda_arn
+  # allow_origins =  var.rp_origin
+  rp_origin = var.rp_origin
 
   depends_on = [ module.lambda ]
 }
 
 ## Deploy frontend
-module "amplify" {
-  source = "./modules/amplify"
+# module "amplify" {
+#   source = "./modules/amplify"
+#   project_name = var.project_name
+#   environment  = var.environment
+
+#   github_frontend_url = var.github_frontend_url
+#   github_access_token = var.github_access_token
+#   api_url             = module.apigateway.api_gateway_url
+
+#   depends_on = [ module.apigateway ]
+# }
+
+resource "aws_s3_bucket" "frontend" {
+  bucket = "frontend-${lower(var.project_name)}"
+
+  tags = {
+    Name        = "CloudVault-Frontend"
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
+module "cloudfront" {
+  source = "./modules/cloudfront"
+
   project_name = var.project_name
   environment  = var.environment
+  dns_name = var.dns_name
+  acm_certificate_arn = var.acm_certificate_arn
 
-  github_frontend_url = var.github_frontend_url
-  github_access_token = var.github_access_token
-  api_url             = module.apigateway.api_gateway_url
+  bucket_domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name
+  bucket_id         = aws_s3_bucket.frontend.id
+  bucket_arn        = aws_s3_bucket.frontend.arn
+  api_gateway_url    = module.apigateway.api_gateway_url
 
-  depends_on = [ module.apigateway ]
+  depends_on = [ aws_s3_bucket.frontend, module.apigateway ]
 }

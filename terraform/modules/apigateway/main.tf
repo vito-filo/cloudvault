@@ -4,7 +4,7 @@ resource "aws_apigatewayv2_api" "http_api" {
   cors_configuration {
     allow_headers = ["Authorization", "Content-Type"]
     allow_methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-    allow_origins = [] ## Amplify url / Domain name
+    allow_origins = [var.rp_origin] ## Amplify url / Domain name
     expose_headers = []
     max_age        = 3600
     allow_credentials = true
