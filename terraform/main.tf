@@ -83,19 +83,6 @@ module "apigateway" {
   depends_on = [ module.lambda ]
 }
 
-## Deploy frontend
-# module "amplify" {
-#   source = "./modules/amplify"
-#   project_name = var.project_name
-#   environment  = var.environment
-
-#   github_frontend_url = var.github_frontend_url
-#   github_access_token = var.github_access_token
-#   api_url             = module.apigateway.api_gateway_url
-
-#   depends_on = [ module.apigateway ]
-# }
-
 resource "aws_s3_bucket" "frontend" {
   bucket = "frontend-${lower(var.project_name)}"
 
