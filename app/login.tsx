@@ -10,6 +10,7 @@ import {
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   ImageBackground,
   Pressable,
@@ -45,6 +46,7 @@ type AuthResponse = {
 export default function Login() {
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { apiFetch } = useApi();
   const { signIn } = useSession();
   const router = useRouter();
@@ -55,7 +57,7 @@ export default function Login() {
       return;
     }
     setEmailError(false);
-
+    setIsLoading(true);
     try {
       // Get Registration Options from the server
       const regOptions: PublicKeyCredentialCreationOptionsJSON = await apiFetch(
@@ -85,6 +87,8 @@ export default function Login() {
     } catch (error) {
       console.error("Registration failed:", error);
       alert("Registration failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -94,7 +98,7 @@ export default function Login() {
       return;
     }
     setEmailError(false);
-
+    setIsLoading(true);
     try {
       const authOptions: PublicKeyCredentialRequestOptionsJSON = await apiFetch(
         `/auth/webauthn/generate-authentication-options?email=${email}`,
@@ -121,10 +125,11 @@ export default function Login() {
         })
       );
       router.navigate("/(tabs)");
-      console.log("auth response:", authResponse);
     } catch (error) {
       console.error("Authentication failed:", error);
       alert("Authentication failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -139,6 +144,8 @@ export default function Login() {
         <Image source={logo} style={styles.image} />
         <Text style={styles.title}>Welcome</Text>
         <Text style={styles.subtitle}>Enter your email</Text>
+        {/* Loading when the request is in progress */}
+        {isLoading ? <ActivityIndicator size="large" color="#0000ff" /> : null}
         {emailError && (
           <Text style={styles.errorTextInput}>* Email is mandatory</Text>
         )}
@@ -147,12 +154,21 @@ export default function Login() {
           placeholder="Email"
           autoCapitalize="none"
           onChangeText={setEmail}
+          editable={!isLoading}
         ></TextInput>
-        <Pressable style={styles.button} onPress={handleLogin}>
+        <Pressable
+          style={styles.button}
+          onPress={handleLogin}
+          disabled={isLoading}
+        >
           <IconSymbol size={28} name="faceid" color={"black"} />
           <Text style={styles.buttonText}>Login with a passkey</Text>
         </Pressable>
-        <Pressable style={styles.button} onPress={handleRegister}>
+        <Pressable
+          style={styles.button}
+          onPress={handleRegister}
+          disabled={isLoading}
+        >
           <IconSymbol size={28} name="person.badge.key" color={"black"} />
           <Text style={styles.buttonText}>Register</Text>
         </Pressable>
