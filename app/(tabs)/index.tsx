@@ -93,7 +93,12 @@ export default function PasswordPage() {
         {loading ? (
           <ActivityIndicator size="large" />
         ) : error ? (
-          <Text>Error: {error}</Text>
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          >
+            <Text>Error reaching the server</Text>
+            <Text>please try again</Text>
+          </View>
         ) : data.length === 0 ? (
           <View
             style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
