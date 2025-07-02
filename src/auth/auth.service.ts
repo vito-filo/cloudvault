@@ -174,7 +174,7 @@ export class AuthService {
     generateRegistrationDto: GenerateRegistrationOptionsDto,
   ) {
     const { email } = generateRegistrationDto;
-    // TODO check if user already exists
+
     try {
       const userPasskeys = await this.prisma.passkey.findMany({
         where: { user: { email: email } },
@@ -270,11 +270,14 @@ export class AuthService {
       await this.prisma.passkey.create({
         data: {
           user: {
-            create: {
-              email: email,
-              provider: 'Webauthn',
-              providerId: credential.id,
-              userConfirmed: false,
+            connectOrCreate: {
+              where: { email: email },
+              create: {
+                email: email,
+                provider: 'Webauthn',
+                providerId: credential.id,
+                userConfirmed: false,
+              },
             },
           },
           id: credential.id,
