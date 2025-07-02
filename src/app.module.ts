@@ -13,7 +13,9 @@ import * as Joi from 'joi';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath:
-        process.env.NODE_ENV === 'production' ? '.env' : '.env.development',
+        process.env.NODE_ENV === 'production'
+          ? '.env.production'
+          : '.env.development',
       validationSchema: Joi.object({
         REGION: Joi.string().required(),
         AES_KEY: Joi.string()
