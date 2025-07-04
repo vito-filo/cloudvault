@@ -1,12 +1,6 @@
 import { IconSymbol } from "@/components/ui/IconSymbol";
-import { useSession } from "@/context/authContext";
 import { useApi } from "@/hooks/useApi";
-import {
-  PublicKeyCredentialCreationOptionsJSON,
-  PublicKeyCredentialRequestOptionsJSON,
-  startAuthentication,
-  startRegistration,
-} from "@simplewebauthn/browser";
+import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -19,117 +13,27 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { validateEmail } from "../utils/validate-email";
 
 const logo = require("../assets/images/icon.png");
 const clouds = require("../assets/images/clouds.jpg");
 
-type AuthResponse = {
-  accessToken: string;
-  user: {
-    id: number;
-    email: string;
-  };
-  verified: boolean;
-  authenticationInfo: {
-    credentialID: string;
-    newCounter: number;
-    userVerified: boolean;
-    credentialDeviceType: "singleDevice" | "multiDevice";
-    credentialBackedUp: boolean;
-    origin: string;
-    rpID: string;
-    authenticatorExtensionResults?: unknown;
-  };
-};
-
 export default function Login() {
   const [email, setEmail] = useState("");
-  const [emailError, setEmailError] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const { apiFetch } = useApi();
-  const { signIn } = useSession();
   const router = useRouter();
+  const { apiFetch } = useApi();
+  const { isLoading, emailError, loginWithPasskey } = useAuth();
 
-  const handleRegister = async () => {
-    if (!validateEmail(email)) {
-      setEmailError(true);
-      return;
-    }
-    setEmailError(false);
-    setIsLoading(true);
+  const initiateRegistration = async () => {
     try {
-      // Get Registration Options from the server
-      const regOptions: PublicKeyCredentialCreationOptionsJSON = await apiFetch(
-        `/auth/webauthn/generate-registration-options?email=${email}`,
-        { method: "Get" }
-      );
-      console.log("Registration options:", regOptions);
-
-      // Ask the authenticator to register a new credential
-      const regRequest = await startRegistration({ optionsJSON: regOptions });
-
-      // Send the registration response to the server for verification
-      const regResponse: { verified: boolean } = await apiFetch(
-        "/auth/webauthn/verify-registration-response",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            email: email,
-            response: regRequest,
-          }),
-        }
-      );
-      if (regResponse.verified) {
-        // Automatic login after registration
-        handleLogin();
-      }
-    } catch (error) {
-      console.error("Registration failed:", error);
-      alert("Registration failed. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleLogin = async () => {
-    if (!validateEmail(email)) {
-      setEmailError(true);
-      return;
-    }
-    setEmailError(false);
-    setIsLoading(true);
-    try {
-      const authOptions: PublicKeyCredentialRequestOptionsJSON = await apiFetch(
-        `/auth/webauthn/generate-authentication-options?email=${email}`,
-        { method: "GET" }
-      );
-
-      console.log("auth options:", authOptions);
-      const authRequest = await startAuthentication({
-        optionsJSON: authOptions,
+      // generate email verification process
+      await apiFetch("/auth/send-verification-code", {
+        method: "POST",
+        body: JSON.stringify({ email }),
       });
-
-      console.log("auth request:", authRequest);
-      const authResponse: AuthResponse = await apiFetch(
-        "/auth/webauthn/verify-authentication-response",
-        {
-          method: "POST",
-          body: JSON.stringify({ email: email, response: authRequest }),
-        }
-      );
-      signIn(
-        JSON.stringify({
-          accessToken: authResponse.accessToken,
-          user: authResponse.user,
-        })
-      );
-      router.navigate("/(tabs)");
+      router.push({ pathname: "/confirmEmail", params: { email } });
     } catch (error) {
-      console.error("Authentication failed:", error);
-      alert("Authentication failed. Please try again.");
-    } finally {
-      setIsLoading(false);
+      // TODO show error to user
+      alert("Failed to initiate registration. Please try again.");
     }
   };
 
@@ -147,7 +51,9 @@ export default function Login() {
         {/* Loading when the request is in progress */}
         {isLoading ? <ActivityIndicator size="large" color="#0000ff" /> : null}
         {emailError && (
-          <Text style={styles.errorTextInput}>* Email is mandatory</Text>
+          <Text style={styles.errorTextInput}>
+            * Please insert a valid email
+          </Text>
         )}
         <TextInput
           style={[styles.emailInput, emailError && styles.errorBorder]}
@@ -158,7 +64,8 @@ export default function Login() {
         ></TextInput>
         <Pressable
           style={styles.button}
-          onPress={handleLogin}
+          // onPress={handleLogin}
+          onPress={() => loginWithPasskey(email)}
           disabled={isLoading}
         >
           <IconSymbol size={28} name="faceid" color={"black"} />
@@ -166,7 +73,8 @@ export default function Login() {
         </Pressable>
         <Pressable
           style={styles.button}
-          onPress={handleRegister}
+          // onPress={handleRegister}
+          onPress={initiateRegistration}
           disabled={isLoading}
         >
           <IconSymbol size={28} name="person.badge.key" color={"black"} />
