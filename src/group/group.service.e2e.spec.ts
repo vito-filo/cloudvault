@@ -1,9 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GroupService } from './group.service';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { ForbiddenException } from '@nestjs/common';
-import { CreateGroupDto } from './dto';
 
 const fartingtonId = '1e862f3c-d251-41ec-bd96-62d59e570a4c';
 const familyGroupId = 'af1c66b2-af96-4bce-85fd-b11c40db511f';
@@ -13,7 +12,8 @@ describe('GroupService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [GroupService, PrismaService, ConfigService],
+      imports: [ConfigModule.forRoot({ envFilePath: '.env.development' })],
+      providers: [GroupService, PrismaService],
     }).compile();
 
     service = module.get<GroupService>(GroupService);
@@ -35,14 +35,7 @@ describe('GroupService', () => {
   });
 
   describe('Create Group', () => {
-    it('should create a group', async () => {
-      const createGroupDto: CreateGroupDto = {
-        name: 'Test Group',
-        description: 'This is a test group',
-        membersEmail: ['fertemupsa@gufum.com', 'alice@example.com'],
-      };
-      const userId = '1e862f3c-d251-41ec-bd96-62d59e570a4c'; // Fartington's ID
-    });
+    it('should create a group', async () => {});
   });
 
   describe('Update Group', () => {
