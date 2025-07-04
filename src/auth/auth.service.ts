@@ -4,24 +4,10 @@ import {
   HttpException,
   Inject,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
-import {
-  ConfirmSignupDto,
-  LoginDto,
-  SignupDto,
-  LoginOutputDto,
-  VerifyRegistrationDto,
-  VeryfiAuthenticationDto,
-} from './dto';
+import { VerifyRegistrationDto, VeryfiAuthenticationDto } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  CognitoIdentityProviderClient,
-  InitiateAuthCommand,
-  SignUpCommand,
-  SignUpCommandOutput,
-  ConfirmSignUpCommand,
-} from '@aws-sdk/client-cognito-identity-provider';
-import * as crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {
@@ -39,9 +25,6 @@ import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 
 @Injectable()
 export class AuthService {
-  private readonly CLIENT_ID: string;
-  private readonly CLIENT_SECRET: string;
-  private readonly client: CognitoIdentityProviderClient;
   private readonly RP_NAME: string;
   private readonly RP_ID: string;
   private readonly RP_ORIGIN: string;
@@ -52,122 +35,9 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @Inject('DYNAMO_CLIENT') private dynamoClient: DynamoDBDocument,
   ) {
-    this.CLIENT_ID = this.configService.get<string>('CLIENT_ID', 'undefined');
-    this.CLIENT_SECRET = this.configService.get<string>(
-      'CLIENT_SECRET',
-      'undefined',
-    );
-    this.client = new CognitoIdentityProviderClient({
-      region: 'eu-south-1',
-    });
-
     this.RP_NAME = this.configService.get<string>('RP_NAME', 'undefined');
     this.RP_ID = this.configService.get<string>('RP_ID', 'undefined');
     this.RP_ORIGIN = this.configService.get<string>('RP_ORIGIN', 'undefined');
-  }
-
-  private generateSecretHash(
-    username: string,
-    clientId: string,
-    clientSecret: string,
-  ) {
-    return crypto
-      .createHmac('SHA256', clientSecret)
-      .update(username + clientId)
-      .digest('base64');
-  }
-
-  async authenticateWithCognito(loginDto: LoginDto): Promise<LoginOutputDto> {
-    try {
-      const command = new InitiateAuthCommand({
-        // UserPoolId: USER_POOL_ID,
-        ClientId: this.CLIENT_ID,
-        AuthFlow: 'USER_PASSWORD_AUTH',
-        AuthParameters: {
-          USERNAME: loginDto.email,
-          PASSWORD: loginDto.password,
-          SECRET_HASH: this.generateSecretHash(
-            loginDto.email,
-            this.CLIENT_ID,
-            this.CLIENT_SECRET,
-          ),
-        },
-      });
-      await this.client.send(command);
-      const user = await this.prisma.user.findUniqueOrThrow({
-        where: { email: loginDto.email },
-      });
-      const payload = { sub: user.id, username: user.email };
-      return {
-        accessToken: await this.jwtService.signAsync(payload),
-        user: {
-          id: user.id,
-          email: user.email,
-        },
-      };
-    } catch (error) {
-      console.error('Error during authentication:', error);
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    }
-  }
-
-  async signUpWithCognito(signupDto: SignupDto): Promise<SignUpCommandOutput> {
-    try {
-      const client = new CognitoIdentityProviderClient({
-        region: 'eu-south-1',
-      });
-
-      const signUpCommand = new SignUpCommand({
-        ClientId: this.CLIENT_ID,
-        SecretHash: this.generateSecretHash(
-          signupDto.email,
-          this.CLIENT_ID,
-          this.CLIENT_SECRET,
-        ),
-        Username: signupDto.email,
-        Password: signupDto.password,
-      });
-      return await client.send(signUpCommand);
-    } catch (error) {
-      console.error('Error during sign up:', error);
-      throw new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
-    }
-  }
-
-  async confirmSignUp(confirmSignUpDto: ConfirmSignupDto) {
-    const command = new ConfirmSignUpCommand({
-      ClientId: this.CLIENT_ID,
-      SecretHash: this.generateSecretHash(
-        confirmSignUpDto.email,
-        this.CLIENT_ID,
-        this.CLIENT_SECRET,
-      ),
-      Username: confirmSignUpDto.email,
-      ConfirmationCode: confirmSignUpDto.code,
-    });
-
-    try {
-      const response = await this.client.send(command);
-      await this.prisma.user.upsert({
-        create: {
-          email: confirmSignUpDto.email,
-          name: confirmSignUpDto.name,
-          provider: 'Cognito',
-          providerId: confirmSignUpDto.userSub,
-          userConfirmed: true,
-        },
-        update: {
-          userConfirmed: true,
-        },
-        where: { email: confirmSignUpDto.email },
-      });
-      return response;
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error('Error during confirmation:', error);
-        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-      }
-    }
   }
 
   async generateRegistrationOptions(
@@ -398,6 +268,68 @@ export class AuthService {
       throw new HttpException(
         'Failed to verify authentication response',
         HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  async sendVerificationCode(email: string) {
+    try {
+      const verificationCode = Math.floor(
+        1000 + Math.random() * 9000,
+      ).toString();
+
+      // Store the verification code in DynamoDB with a TTL of 5 minutes
+      await this.dynamoClient.put({
+        TableName: 'Registration',
+        Item: {
+          email,
+          code: verificationCode,
+          ttl: Math.floor(Date.now() / 1000) + 300,
+        },
+      });
+
+      // You can send the verification code via email or other means here
+      return {
+        message: 'Verification code sent successfully',
+      };
+    } catch (error) {
+      console.error('Error sending verification code:', error);
+      throw new HttpException(
+        'Failed to send verification code',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async verifyCode(email: string, code: string) {
+    try {
+      // Retrieve the verification code from DynamoDB
+      const cachedCode = await this.dynamoClient.get({
+        TableName: 'Registration',
+        Key: { email },
+        AttributesToGet: ['code'],
+      });
+
+      if (!cachedCode.Item || cachedCode.Item.code !== code) {
+        throw new BadRequestException('Invalid or expired verification code');
+      }
+
+      // If the code is valid, you can proceed with further actions, like confirming the user
+      return {
+        verification: true,
+        message: 'Verification code is valid',
+      };
+    } catch (error) {
+      console.error('Error verifying code:', error);
+      if (
+        error instanceof UnauthorizedException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      throw new HttpException(
+        'Failed to verify code',
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
