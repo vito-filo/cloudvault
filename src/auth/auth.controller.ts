@@ -8,9 +8,6 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
-  ConfirmSignupDto,
-  LoginDto,
-  SignupDto,
   VerifyRegistrationDto,
   GenerateRegistrationOptionsDto,
   VeryfiAuthenticationDto,
@@ -22,19 +19,20 @@ import { Public } from './jwt-auth.guard';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Post('login')
-  signIn(@Body() loginDto: LoginDto) {
-    return this.authService.authenticateWithCognito(loginDto);
+  @Post('send-verification-code')
+  sendVerificationCode(@Body('email') email: string) {
+    if (!email) {
+      throw new BadRequestException('Email is required');
+    }
+    return this.authService.sendVerificationCode(email);
   }
 
-  @Post('signup')
-  signUp(@Body() signupDto: SignupDto) {
-    return this.authService.signUpWithCognito(signupDto);
-  }
-
-  @Post('confirm-email')
-  confirm(@Body() confirmSignipDto: ConfirmSignupDto) {
-    return this.authService.confirmSignUp(confirmSignipDto);
+  @Post('verify-code')
+  verifyCode(@Body('email') email: string, @Body('code') code: string) {
+    if (!email || !code) {
+      throw new BadRequestException('Email and code are required');
+    }
+    return this.authService.verifyCode(email, code);
   }
 
   @Get('/webauthn/generate-registration-options')
