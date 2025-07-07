@@ -1,98 +1,106 @@
+# Cloud Vault Password Manager
+
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+  <img src="./logo.png" alt="Cloud Vault Logo" width="200"/>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Cloud Vault is a **private open-source password manager** designed to be deployed on your own cloud (currently AWS-supported). It helps you store personal and shared passwords securely, while offering a modern passwordless login experience using Passkey authentication.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 🎯 Purpose
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Cloud Vault’s goal is to give people full control over their password manager by letting them run it in their own infrastructure. Unlike SaaS solutions where you give up trust to a third-party, **Cloud Vault** can be deployed anywhere on your private cloud or public cloud services (currently AWS is supported by default).
 
-## Project setup
+It supports:
 
-```bash
-$ npm install
-```
+- Personal passwords (encrypted in transit and at rest).
+- Group/shared passwords you can securely share with family members or colleagues.
+- Passwordless login with Passkey, so you don’t need to remember a master password. Your device’s biometric authentication (Face ID, fingerprint) unlocks your vault.
 
-## Compile and run the project
+---
 
-```bash
-# development
-$ npm run start
+## 💡 Reason
 
-# watch mode
-$ npm run start:dev
+This project was built for people who often get asked to keep passwords for others (e.g. family members) as well as for themselves. With Cloud Vault, you can:
 
-# production mode
-$ npm run start:prod
-```
+- Store your personal passwords securely.
+- Share selected passwords with other users in groups.
+- Forget about master passwords entirely thanks to Passkey support.
 
-## Run tests
+---
 
-```bash
-# unit tests
-$ npm run test
+## ⚠️ Disclaimer ❗❗
 
-# e2e tests
-$ npm run test:e2e
+> **This is a personal project built for fun and learning. It is not tested for production use and is not guaranteed to be secure.**  
+> **If you visit the demo page, please do not store any real passwords.**
 
-# test coverage
-$ npm run test:cov
-```
+---
 
-## Deployment
+## 🌐 Demo
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+You can try a demo of the app here:
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+➡️ [Demo Link](#replace-with-your-link) COMING SOON!
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+To register:
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+1. Provide your email.
+2. Register using a device with Passkey support (Apple Face ID, Android fingerprint, etc.).
+3. **If you don’t have a device with Passkey**, or don’t want to register one, you can use a browser extension as explained in this guide:
 
-## Resources
+➡️ [Chrome Webauthn Emulator](https://developer.chrome.com/docs/devtools/webauthn)
 
-Check out a few resources that may come in handy when working with NestJS:
+---
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## 📦 How to Use
 
-## Support
+### ✅ Prerequisites
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+- AWS account
+- AWS CLI
+- Terraform
+- Node.js
+- npm
 
-## Stay in touch
+### 🚀 Deployment **Please note: You may be charged a fee on AWS account**
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- Clone the repo.
+- Deploy the infrastructure to AWS:
+  - Create a file called `prod.tfvars` using the same template as `reference.tfvars`
+  - Build the backend:
+    ```bash
+    npm install
+    npm run build
+    ```
+  - Deploy with Terraform:
+    ```bash
+    cd terraform
+    terraform init
+    terraform apply -var-file=prod.tfvars
+    ```
+- Deploy the frontend: follow the instructions in [this repo](https://github.com/vito-filo/cloudvault-frontend)
 
-## License
+---
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## 🛠️ Technologies
+
+![NestJS](https://img.shields.io/badge/NestJS-red?logo=nestjs&logoColor=white)
+![WebAuthn](https://img.shields.io/badge/WebAuthn-Authentication-blue)
+![AWS](https://img.shields.io/badge/AWS-Cloud-orange?logo=amazon-aws&logoColor=white)
+
+- **NestJS** – for a scalable and modular API.
+- **WebAuthn** – for Passkey authentication.
+- **AWS services** – RDS, Lambda, S3, CloudFront, API Gateway, SES.
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Feel free to open issues or submit PRs.
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License – see the [LICENSE](./LICENSE).
