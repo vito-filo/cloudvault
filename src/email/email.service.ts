@@ -4,14 +4,22 @@ import {
   SendEmailCommand,
   SendEmailCommandInput,
 } from '@aws-sdk/client-ses';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EmailService {
-  constructor(@Inject('SES_CLIENT') private readonly sesClient: SESClient) {}
+  private readonly source: string;
+
+  constructor(
+    @Inject('SES_CLIENT') private readonly sesClient: SESClient,
+    private readonly configService: ConfigService,
+  ) {
+    this.source = configService.get<string>('EMAIL_SOURCE', 'undefined');
+  }
 
   async sendVerificationEmail(receiver: string, code: string): Promise<void> {
     const config: SendEmailCommandInput = {
-      Source: 'noreply@cloudvault.filomenodev.studio',
+      Source: this.source,
       Destination: {
         ToAddresses: [receiver],
       },

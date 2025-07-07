@@ -26,6 +26,7 @@ import * as Joi from 'joi';
               '"AES_KEY" fails to match the required pattern: /^[a-zA-Z0-9_+]+$/',
           }),
         JWT_SECRET: Joi.string().required(),
+        EMAIL_SOURCE: Joi.string().required(),
       }),
     }),
     AuthModule,
