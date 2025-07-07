@@ -28,7 +28,7 @@
     "sls:package": "sls package"
   },
   "dependencies": {
-    "@aws-sdk/client-cognito-identity-provider": "^3.804.0",
+    "@aws-sdk/client-ses": "^3.840.0",
     "@aws-sdk/lib-dynamodb": "^3.830.0",
     "@codegenie/serverless-express": "^4.16.0",
     "@nestjs/common": "^11.0.1",
