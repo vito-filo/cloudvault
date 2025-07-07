@@ -10,6 +10,7 @@ import { VerifyRegistrationDto, VeryfiAuthenticationDto } from './dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { EmailService } from '../email/email.service';
 import {
   generateRegistrationOptions,
   verifyRegistrationResponse,
@@ -34,6 +35,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     @Inject('DYNAMO_CLIENT') private dynamoClient: DynamoDBDocument,
+    private readonly emailService: EmailService,
   ) {
     this.RP_NAME = this.configService.get<string>('RP_NAME', 'undefined');
     this.RP_ID = this.configService.get<string>('RP_ID', 'undefined');
@@ -288,7 +290,9 @@ export class AuthService {
         },
       });
 
-      // You can send the verification code via email or other means here
+      // Send the verification code via email
+      await this.emailService.sendVerificationEmail(email, verificationCode);
+
       return {
         message: 'Verification code sent successfully',
       };

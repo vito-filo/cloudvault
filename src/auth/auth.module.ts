@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthGuard } from './jwt-auth.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { DynamoModule } from '../dynamoDB/dynamo.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { DynamoModule } from '../dynamoDB/dynamo.module';
       }),
     }),
     DynamoModule,
+    EmailModule,
   ],
   controllers: [AuthController],
   providers: [

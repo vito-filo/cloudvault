@@ -7,6 +7,7 @@ import { DynamoModule } from '../dynamoDB/dynamo.module';
 import { AuthService } from './auth.service';
 import { ConfigModule } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { EmailModule } from '../email/email.module';
 
 // This unit tests assert that the AuthController:
 // - is defined correctly
@@ -19,7 +20,7 @@ describe('PasswordController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [PrismaModule, ConfigModule, DynamoModule],
+      imports: [PrismaModule, ConfigModule, DynamoModule, EmailModule],
       controllers: [AuthController],
       providers: [AuthService, JwtService],
     }).compile();
