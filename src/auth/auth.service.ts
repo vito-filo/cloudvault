@@ -103,6 +103,8 @@ export class AuthService {
   ) {
     try {
       const email = verifyRegistrationDto.email;
+      const username = verifyRegistrationDto.username;
+
       const cachedRawOptions = await this.dynamoClient.get({
         TableName: 'Registration',
         Key: { email },
@@ -146,9 +148,10 @@ export class AuthService {
               where: { email: email },
               create: {
                 email: email,
+                name: username,
                 provider: 'Webauthn',
                 providerId: credential.id,
-                userConfirmed: false,
+                userConfirmed: true,
               },
             },
           },
@@ -274,8 +277,19 @@ export class AuthService {
     }
   }
 
-  async sendVerificationCode(email: string) {
+  async sendVerificationCode(email: string, username: string) {
     try {
+      // Check if the user already exists
+      const existingUser = await this.prisma.user.findFirst({
+        where: {
+          OR: [{ email: email }, { name: username }],
+        },
+      });
+
+      if (existingUser) {
+        throw new BadRequestException('User already exists');
+      }
+
       const verificationCode = Math.floor(
         1000 + Math.random() * 9000,
       ).toString();
@@ -297,6 +311,9 @@ export class AuthService {
         message: 'Verification code sent successfully',
       };
     } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       console.error('Error sending verification code:', error);
       throw new HttpException(
         'Failed to send verification code',

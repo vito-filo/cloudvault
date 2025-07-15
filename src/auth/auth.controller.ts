@@ -20,11 +20,14 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('send-verification-code')
-  sendVerificationCode(@Body('email') email: string) {
-    if (!email) {
-      throw new BadRequestException('Email is required');
+  sendVerificationCode(
+    @Body('email') email: string,
+    @Body('username') username: string,
+  ) {
+    if (!email || !username) {
+      throw new BadRequestException('Email and Username are required');
     }
-    return this.authService.sendVerificationCode(email);
+    return this.authService.sendVerificationCode(email, username);
   }
 
   @Post('verify-code')

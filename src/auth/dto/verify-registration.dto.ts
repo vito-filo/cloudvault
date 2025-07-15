@@ -6,4 +6,7 @@ export class VerifyRegistrationDto {
 
   @IsNotEmpty()
   email: string;
+
+  @IsNotEmpty()
+  username: string;
 }
