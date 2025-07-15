@@ -22,3 +22,5 @@ dns_name=
 rp_name=
 rp_id=
 rp_origin=
+
+sns_email_source= // Email address to use as the source for SNS notifications

@@ -58,6 +58,7 @@ resource "aws_lambda_function" "backend" {
       AES_KEY = var.AES_KEY
       JWT_SECRET = var.JWT_SECRET
       DATABASE_URL = "postgresql://${var.rds_db_username}:${var.rds_db_password}@${var.rds_url}/${var.rds_db_name}"
+      EMAIL_SOURCE = var.email_source
 
       RP_NAME = var.rp_name
       RP_ID = var.rp_id

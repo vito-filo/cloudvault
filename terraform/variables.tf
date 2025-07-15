@@ -72,3 +72,8 @@ variable "acm_certificate_arn" {
   type        = string
   default     = ""
 }
+
+variable "sns_email_source" {
+  description = "Email address to use as the source for SNS notifications"
+  type        = string
+}

@@ -68,6 +68,8 @@ module "lambda"{
   rp_id = var.rp_id
   rp_origin = var.rp_origin
 
+  email_source = var.sns_email_source
+
   depends_on = [ module.rds, aws_dynamodb_table.registration_table ]
 }
 

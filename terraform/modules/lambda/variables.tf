@@ -68,3 +68,8 @@ variable "rds_db_password" {
   type        = string
   sensitive   = true
 }
+
+variable "email_source" {
+  description = "Email address to use as the source for SNS notifications"
+  type        = string
+}
