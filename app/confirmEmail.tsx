@@ -13,7 +13,10 @@ import {
 const clouds = require("../assets/images/clouds.jpg");
 
 export default function ConfirmEmail() {
-  const { email } = useLocalSearchParams<{ email: string }>();
+  const { username, email } = useLocalSearchParams<{
+    username: string;
+    email: string;
+  }>();
   const { verificationCodeError, verifyCode } = useAuth();
   const [verificationCode, setVerificationCode] = useState("");
 
@@ -42,7 +45,7 @@ export default function ConfirmEmail() {
         />
         <Pressable
           style={styles.button}
-          onPress={() => verifyCode(email, verificationCode)}
+          onPress={() => verifyCode(username, email, verificationCode)}
         >
           <Text style={styles.buttonText}>Confirm</Text>
         </Pressable>

@@ -1,5 +1,9 @@
 import { useSession } from "@/context/authContext";
-import { validateCode, validateEmail } from "@/utils/validate-email";
+import {
+  validateCode,
+  validateEmail,
+  validateUsername,
+} from "@/utils/validate-strings";
 import {
   PublicKeyCredentialCreationOptionsJSON,
   PublicKeyCredentialRequestOptionsJSON,
@@ -34,9 +38,36 @@ export function useAuth() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState(false);
+  const [userNameError, setUserNameError] = useState(false);
   const [verificationCodeError, setVerificationCodeError] = useState(false);
 
-  const verifyCode = async (email: string, code: string) => {
+  const initiateRegistration = async (email: string, username: string) => {
+    if (!validateEmail(email)) {
+      setEmailError(true);
+      return;
+    }
+    setEmailError(false);
+    if (!validateUsername(username)) {
+      setUserNameError(true);
+      return;
+    }
+    setUserNameError(false);
+    try {
+      // generate email verification process
+      await apiFetch("/auth/send-verification-code", {
+        method: "POST",
+        body: JSON.stringify({ username, email }),
+      });
+      router.push({ pathname: "/confirmEmail", params: { username, email } });
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(error.message || "An error occurred during registration.");
+      } else {
+        alert("An error occurred during registration.");
+      }
+    }
+  };
+  const verifyCode = async (username: string, email: string, code: string) => {
     if (!validateCode(code)) {
       setVerificationCodeError(true);
       return;
@@ -48,7 +79,7 @@ export function useAuth() {
         method: "POST",
         body: JSON.stringify({ email, code }),
       });
-      registerPasskey(email);
+      registerPasskey(username, email);
     } catch (error) {
       console.error("Verification failed:", error);
       setVerificationCodeError(true);
@@ -95,7 +126,7 @@ export function useAuth() {
     }
   };
 
-  const registerPasskey = async (email: string) => {
+  const registerPasskey = async (username: string, email: string) => {
     if (!validateEmail(email)) {
       setEmailError(true);
       return;
@@ -118,6 +149,7 @@ export function useAuth() {
           method: "POST",
           body: JSON.stringify({
             email: email,
+            username: username,
             response: regRequest,
           }),
         }
@@ -137,7 +169,9 @@ export function useAuth() {
   return {
     isLoading,
     emailError,
+    userNameError,
     verificationCodeError,
+    initiateRegistration,
     loginWithPasskey,
     registerPasskey,
     verifyCode,

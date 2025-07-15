@@ -1,7 +1,5 @@
 import { IconSymbol } from "@/components/ui/IconSymbol";
-import { useApi } from "@/hooks/useApi";
 import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -19,23 +17,14 @@ const clouds = require("../assets/images/clouds.jpg");
 
 export default function Login() {
   const [email, setEmail] = useState("");
-  const router = useRouter();
-  const { apiFetch } = useApi();
-  const { isLoading, emailError, loginWithPasskey } = useAuth();
-
-  const initiateRegistration = async () => {
-    try {
-      // generate email verification process
-      await apiFetch("/auth/send-verification-code", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      });
-      router.push({ pathname: "/confirmEmail", params: { email } });
-    } catch (error) {
-      // TODO show error to user
-      alert("Failed to initiate registration. Please try again.");
-    }
-  };
+  const [username, setUsername] = useState("");
+  const {
+    isLoading,
+    emailError,
+    userNameError,
+    initiateRegistration,
+    loginWithPasskey,
+  } = useAuth();
 
   return (
     <ImageBackground
@@ -49,7 +38,26 @@ export default function Login() {
         <Text style={styles.title}>Welcome</Text>
         <Text style={styles.subtitle}>Enter your email</Text>
         {/* Loading when the request is in progress */}
-        {isLoading ? <ActivityIndicator size="large" color="#0000ff" /> : null}
+        {isLoading ? (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#0000ff" />
+          </View>
+        ) : null}
+        {(userNameError || username) && (
+          <>
+            <Text style={styles.errorTextInput}>
+              * Username must be 3-20 characters and can only contain
+              underscores (_)
+            </Text>
+            <TextInput
+              style={[styles.emailInput, emailError && styles.errorBorder]}
+              placeholder={username || "Username"}
+              autoCapitalize="none"
+              onChangeText={setUsername}
+              editable={!isLoading}
+            ></TextInput>
+          </>
+        )}
         {emailError && (
           <Text style={styles.errorTextInput}>
             * Please insert a valid email
@@ -64,7 +72,6 @@ export default function Login() {
         ></TextInput>
         <Pressable
           style={styles.button}
-          // onPress={handleLogin}
           onPress={() => loginWithPasskey(email)}
           disabled={isLoading}
         >
@@ -73,8 +80,7 @@ export default function Login() {
         </Pressable>
         <Pressable
           style={styles.button}
-          // onPress={handleRegister}
-          onPress={initiateRegistration}
+          onPress={() => initiateRegistration(email, username)}
           disabled={isLoading}
         >
           <IconSymbol size={28} name="person.badge.key" color={"black"} />
@@ -86,6 +92,18 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
+  loadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 20,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
   background: {
     flex: 1,
     justifyContent: "center",
@@ -122,7 +140,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 10,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   errorBorder: {
     borderColor: "red",
