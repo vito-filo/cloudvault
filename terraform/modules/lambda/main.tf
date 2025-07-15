@@ -38,6 +38,26 @@ resource "aws_iam_role_policy" "lambda_dynamodb_access" {
   })
 }
 
+## Create IAM policy for Lambda to send SES emails
+resource "aws_iam_role_policy" "lambda_ses_access" {
+  name = "lambda-ses-access"
+  role = aws_iam_role.lambda_exec.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "ses:SendEmail",
+          "ses:SendRawEmail"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 
 resource "aws_iam_role_policy_attachment" "lambda_basic" {
   role       = aws_iam_role.lambda_exec.name
