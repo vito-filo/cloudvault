@@ -45,6 +45,7 @@ describe('Webauthn', () => {
   const RP_NAME = process.env.RP_NAME || 'Cloud-Vault';
   const RP_ID = process.env.RP_ID || 'localhost';
   const EMAIL = 'example@email.com';
+  const USERNAME = 'exampleUser';
 
   const options: PublicKeyCredentialCreationOptionsJSON = {
     challenge: CHALLENGE,
@@ -187,6 +188,7 @@ describe('Webauthn', () => {
       // Create input for verifyRegistration ednpoint
       const verifiRegistrationDto = {
         email: EMAIL,
+        username: USERNAME,
         response: mockedCreationResponse,
       };
 
