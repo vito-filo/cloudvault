@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Passkey {
+  id                String    @id @default(uuid())
+  publicKey         Bytes
+  webauthnUserID    String
+  counter           Int       @default(0)
+  deviceType        String
+  backedUp          Boolean   @default(false)
+  transport         String
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  userId            String
+
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  name              String
+  provider          String   // 'google' | 'facebook' | 'cognito' | etc.
+  providerId        String   // third-party user ID, e.g. sub from JWT
+  userConfirmed     Boolean   @default(false)
+
+  passwords         Password[]
+  groupsCreated     Group[]   @relation("GroupCreator")
+  groupMemberships  GroupMember[]
+
+  Passkey Passkey[]
+}
+
+model Password {
+  id                String    @id @default(uuid())
+  url               String?
+  serviceName       String
+  username          String?
+  email             String?
+  password          String
+  iv                String
+  description       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  ownerId           String
+        
+  owner             User      @relation(fields: [ownerId], references: [id])
+  groupShares       PasswordGroupShare[]
+}
+
+model Group {   
+  id                String    @id @default(uuid())
+  name              String
+  description       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  createdById       String
+        
+  createdBy         User         @relation("GroupCreator", fields: [createdById], references: [id])
+  members           GroupMember[]
+  sharedPasswords   PasswordGroupShare[]
+}
+
+model GroupMember {
+  groupId           String
+  userId            String
+  isAdmin           Boolean   @default(false)
+  joinedAt          DateTime  @default(now())
+
+  group             Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user              User      @relation(fields: [userId], references: [id])
+
+  @@id([groupId, userId])
+}
+
+model PasswordGroupShare {
+  passwordId        String
+  groupId           String
+  sharedAt          DateTime @default(now())
+
+  password          Password @relation(fields: [passwordId], references: [id])
+  group             Group    @relation(fields: [groupId], references: [id])
+
+  @@id([passwordId, groupId])
+}

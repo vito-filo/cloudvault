@@ -1,0 +1,23 @@
+service: cloud-vault-backend
+
+plugins:
+  - serverless-offline
+
+build:
+  exclude:
+    - '@nestjs/microservices'
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+
+functions:
+  main:
+    handler: dist/src/lambda.handler
+    events:
+      - http:
+          method: ANY
+          path: /
+      - http:
+          method: ANY
+          path: '{proxy+}'
