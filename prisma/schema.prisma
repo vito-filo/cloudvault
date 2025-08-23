@@ -33,7 +33,7 @@ model Passkey {
 model User {
   id                String    @id @default(uuid())
   email             String    @unique
-  name              String?
+  name              String
   provider          String   // 'google' | 'facebook' | 'cognito' | etc.
   providerId        String   // third-party user ID, e.g. sub from JWT
   userConfirmed     Boolean   @default(false)

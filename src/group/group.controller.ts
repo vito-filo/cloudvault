@@ -47,9 +47,7 @@ export class GroupController {
 
   // Search user by name/email
   @Get('user/search/')
-  searchUser(
-    @Query('name') name: string,
-  ): Promise<{ name: string | null; email: string }[]> {
+  searchUser(@Query('name') name: string): Promise<{ name: string | null }[]> {
     return this.groupService.searchUserByName(name);
   }
 

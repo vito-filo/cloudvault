@@ -80,21 +80,22 @@ export class GroupService {
     }
   }
 
-  async searchUserByName(
-    name: string,
-  ): Promise<{ name: string | null; email: string }[]> {
-    // TODO make the username mandatory in the DB schema
+  async searchUserByName(name: string): Promise<{ name: string | null }[]> {
     try {
+      console.log('Searching for users with name:', name);
       const users = await this.prisma.user.findMany({
         where: {
-          OR: [{ email: { contains: name } }, { name: { contains: name } }],
+          OR: [
+            { email: { contains: name, mode: 'insensitive' } },
+            { name: { contains: name, mode: 'insensitive' } },
+          ],
         },
         select: {
-          email: true,
           name: true,
         },
       });
 
+      console.log('Search results:', users);
       return users;
     } catch (error) {
       console.error('Error searching users:', error);
